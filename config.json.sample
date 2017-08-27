@@ -1,0 +1,51 @@
+{
+  "config_namespace": "development",
+  "development": {
+    "mysql": {
+      "host": "127.0.0.1",
+      "port": 3306,
+      "user": "root",
+      "password": "root",
+      "db": "MyBotDB"
+    },
+    "serverquery": {
+      "host": "127.0.0.1",
+      "port": 10011,
+      "user": "serveradmin",
+      "password": "pass",
+      "virtualserverid": 1
+    },
+    "accesslevel": {
+      "default": 0,
+      "groups": {
+        "Server Admin": 10,
+        "Normal": 1
+      }
+    },
+    "commandprefix": "."
+  },
+  "production": {
+    "mysql": {
+      "host": "127.0.0.1",
+      "port": 3306,
+      "user": "root",
+      "password": "root",
+      "db": "MyBotDB"
+    },
+    "serverquery": {
+      "host": "127.0.0.1",
+      "port": 10011,
+      "user": "serveradmin",
+      "password": "pass",
+      "virtualserverid": 1
+    },
+    "accesslevel": {
+      "default": 0,
+      "groups": {
+        "Server Admin": 10,
+        "Normal": 1
+      }
+    },
+    "commandprefix": "."
+  }
+}
