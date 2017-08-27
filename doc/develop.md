@@ -17,7 +17,7 @@ Arguments:
 - client_list
 - channel_list
 
-Will be called everytime the bot logs into the teamspeak server. It will supply the initial list of clients and channel which are present at the given moment. See [data structures](#) for an overview about the structure of the arguments.
+Will be called everytime the bot logs into the teamspeak server. It will supply the initial list of clients and channel which are present at the given moment. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 
 <br>
@@ -25,7 +25,7 @@ Will be called everytime the bot logs into the teamspeak server. It will supply 
 Arguments:
 - event
 
-Will be called everytime a client connects. See [data structures](#) for an overview about the structure of the arguments.
+Will be called everytime a client connects. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 
 <br>
@@ -33,7 +33,7 @@ Will be called everytime a client connects. See [data structures](#) for an over
 Arguments:
 - event
 
-Will be called everytime a client disconnects. See [data structures](#) for an overview about the structure of the arguments.
+Will be called everytime a client disconnects. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 
 <br>
@@ -41,7 +41,7 @@ Will be called everytime a client disconnects. See [data structures](#) for an o
 Arguments:
 - event
 
-Will be called everytime a client moves between channels. See [data structures](#) for an overview about the structure of the arguments.
+Will be called everytime a client moves between channels. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 
 <br>
@@ -49,7 +49,7 @@ Will be called everytime a client moves between channels. See [data structures](
 Arguments:
 - event
 
-Will be called when te bot receives a private message. See [data structures](#) for an overview about the structure of the arguments.
+Will be called when te bot receives a private message. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 
 <br>
