@@ -13,7 +13,8 @@ class TestPlugin(BasePlugin):
             return
         # self._bot_instance.send_command("clientlist", callback=lambda e: print(e.args))
         self._bot_instance.send_command("sendtextmessage target=%s targetmode=1 msg=Hello" % client_list[0]["clid"])
-        # self._bot_instance.add_chat_command("test1", "This is a test command", 0, self.on_test_command)
+        self._bot_instance.add_chat_command("test1", "This is a test command", 0, self.on_test_command)
+        self._bot_instance.add_chat_command("test2", "This is a test command", 0, self.on_test_command, True)
         # self._bot_instance.add_chat_command("test2", "This is a test command", 5, self.on_test_command)
         # self._bot_instance.add_chat_command("test3", "This is a test command", 9, self.on_test_command)
         # self._bot_instance.add_chat_command("test4", "This is a test command", 10, self.on_test_command)
@@ -21,6 +22,12 @@ class TestPlugin(BasePlugin):
         # print(self._bot_instance.get_client_value(client_list[0]["clid"], "test"))
         # print(self._bot_instance.set_client_value(client_list[0]["clid"], "test", 2, True))
         # print(self._bot_instance.get_client_value(client_list[0]["clid"], "test"))
+        # print(self._bot_instance.get_value("test"))
+        # print(self._bot_instance.set_value("test", 10))
+        # print(self._bot_instance.get_value("test"))
+
+    def on_test_command(self, *args):
+        print(args)
 
     def on_client_joined(self, event):
         print("on_client_joined")
@@ -36,6 +43,10 @@ class TestPlugin(BasePlugin):
 
     def on_private_text(self, event):
         print("on_private_text")
+        print(event.args)
+
+    def on_channel_text(self, event):
+        print("on_channel_text")
         print(event.args)
 
     def on_connection_lost(self):

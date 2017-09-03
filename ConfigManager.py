@@ -21,7 +21,9 @@ class ConfigManager:
             exit()
         file_handle.close()
 
-    def get_value(self, key):
+        self._environment = self._get_value("config_namespace")
+
+    def _get_value(self, key):
         key_path = key.split(".")
         if len(key_path) == 1:
             return self._config[key]
@@ -29,3 +31,6 @@ class ConfigManager:
         for entry in key_path:
             cfg = cfg[entry]
         return cfg
+
+    def get_value(self, key):
+        return self._get_value(self._environment + "." + key)

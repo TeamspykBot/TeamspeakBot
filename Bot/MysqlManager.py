@@ -12,7 +12,7 @@ class MysqlManager:
         self._password = None
         self._db = None
 
-    def connect_to_d_b(self, host, port, user, password, db):
+    def connect_to_db(self, host, port, user, password, db):
         self._host = host
         self._port = port
         self._user = user
@@ -35,7 +35,7 @@ class MysqlManager:
             return self._cur
         except pymysql.MySQLError as e:
             if e.args[0] in (2006, 2013):  # MYSQL GONE AWAY
-                self.connect_to_d_b(self._host, self._port, self._user, self._password, self._db)
+                self.connect_to_db(self._host, self._port, self._user, self._password, self._db)
             elif e.args[0] in (1062,):  # DUPLICATE KEY ENTRY
                 pass
             else:
@@ -77,3 +77,12 @@ class MysqlManager:
         for row in self._cur:
             ret[row[0]] = row[1]
         return ret
+
+    def get_value(self, key, default_value=None):
+        self.execute_query("SELECT `value` FROM Settings WHERE `key`=%s", key)
+        for row in self._cur:
+            return row[0]
+        return default_value
+
+    def set_value(self, key, value):
+        self.execute_query("REPLACE INTO Settings (`key`, value) VALUES (%s, %s);", (key, value))

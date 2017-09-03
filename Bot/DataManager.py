@@ -5,6 +5,7 @@ class DataManager:
         self._accessLevels = {}
         self._defaultAccessLevel = 0
         self._mysqlManager = mysql_manager
+        self._settings = {}
 
     def get_client_cldbid_by_clid(self, clid):
         for cldbid in self._clientList:
@@ -19,19 +20,22 @@ class DataManager:
         return int(self._clientList[cldbid]["teamspeak_data"]["clid"])
 
     def add_client(self, clid, client_data):
-        self._mysqlManager.add_online_client(client_data["clid"], client_data["client_database_id"],
-                                             client_data["client_nickname"], "0.0.0.0")
+        if self._mysqlManager:
+            self._mysqlManager.add_online_client(client_data["clid"], client_data["client_database_id"],
+                                                 client_data["client_nickname"], "0.0.0.0")
 
         self._clientList[int(clid)] = {
             "teamspeak_data": client_data,
-            "custom_data": self._mysqlManager.get_client_values(client_data["client_database_id"]),
+            "custom_data": self._mysqlManager.get_client_values(client_data["client_database_id"]) if self._mysqlManager
+            else {},
             "servergroups": {}
         }
 
     def add_clients(self, clients, clear=False):
         if clear:
             self._clientList.clear()
-            self._mysqlManager.clear_online_clients()
+            if self._mysqlManager:
+                self._mysqlManager.clear_online_clients()
         for client in clients:
             self.add_client(client["clid"], client)
 
@@ -48,11 +52,14 @@ class DataManager:
         return False
 
     def remove_client(self, clid):
-        self._mysqlManager.remove_online_client(clid)
+        if self._mysqlManager:
+            self._mysqlManager.remove_online_client(clid)
         self._clientList.pop(int(clid), None)
 
     def get_clients(self):
-        return list(self._clientList.keys())
+        wsq = [client for client in self._clientList if
+               self._clientList[client]["teamspeak_data"]["client_type"] == '0']
+        return list(wsq)
 
     def set_client_value(self, clid, key, value, teamspeak_data=False, data_changed_callback=None):
         clid = int(clid)
@@ -86,6 +93,8 @@ class DataManager:
             return self._get_client_value_for_namespace(clid, key, "custom_data")
 
     def set_persistent_client_value(self, clid, key, value):
+        if self._mysqlManager is None:
+            return
         clid = int(clid)
         cldbid = self.get_client_cldbid_by_clid(clid)
         if cldbid is None:
@@ -173,3 +182,9 @@ class DataManager:
         self._clientList.clear()
         self._channelList.clear()
         self._accessLevels.clear()
+
+    def set_value(self, key, value):
+        return self._mysqlManager.set_value(key, value)
+
+    def get_value(self, key, default_value=None):
+        return self._mysqlManager.get_value(key, default_value)

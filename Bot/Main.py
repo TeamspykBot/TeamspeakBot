@@ -12,17 +12,17 @@ import os
 
 from Bot.Utility import starts_with_c_i, normalize_message, Event, escape, Timer, ChatCommand
 
-from Globals import config, environment
+from Globals import config
 
 eventTypes = Enum("EventTypes", "CLIENT_JOINED "
                                 "CLIENT_LEFT "
                                 "CLIENT_MOVED "
-                                "PRIVATE_TEXT "
+                                "TEXT "
                                 "LOST_CONNECTION ")
 
 
 class TeamspeakBot:
-    def __init__(self, ip, port=10011, user=None, password=None, virtual_server_id=None):
+    def __init__(self, ip, port=10011, user=None, password=None, virtual_server_id=None, minimal=False):
         """!
         @brief Constructs a TeamspeakBot instance
 
@@ -31,9 +31,12 @@ class TeamspeakBot:
         @param user Serverquery username
         @param password Serverquery password
         @param virtual_server_id The virtual id of the serverr you want the bot to manage
+        @param minimal Initializes a minimal bot version.
+            The following will not be initialized: mysql, timer, plugins
         """
 
         self._conn = None
+        self._my_clid = None
 
         self._init_networking(ip, port)
         self._ip = ip
@@ -43,30 +46,41 @@ class TeamspeakBot:
         self._password = password
         self._virtualServerId = virtual_server_id
 
+        self._queryTracker = Bot.QueryManager.QueryTracker()
+
+        self._slaves = {}  # cid: slave_instance
+        self._pluginList = []
+
+        self._lastLine = ""
+
+        if minimal:
+            self._dataManager = Bot.DataManager.DataManager(None)
+            self._dataManager.set_default_access_level(config.get_value("accesslevel.default"))
+            self._dataManager.set_access_levels(config.get_value("accesslevel.groups"))
+            return
+
         self._mysqlManager = Bot.MysqlManager.MysqlManager()
-        self._mysqlManager.connect_to_d_b(config.get_value(environment + ".mysql.host"),
-                                          config.get_value(environment + ".mysql.port"),
-                                          config.get_value(environment + ".mysql.user"),
-                                          config.get_value(environment + ".mysql.password"),
-                                          config.get_value(environment + ".mysql.db"))
+        self._mysqlManager.connect_to_db(config.get_value("mysql.host"),
+                                         config.get_value("mysql.port"),
+                                         config.get_value("mysql.user"),
+                                         config.get_value("mysql.password"),
+                                         config.get_value("mysql.db"))
 
         self._dataManager = Bot.DataManager.DataManager(self._mysqlManager)
-        self._dataManager.set_default_access_level(config.get_value(environment + ".accesslevel.default"))
-        self._dataManager.set_access_levels(config.get_value(environment + ".accesslevel.groups"))
+        self._dataManager.set_default_access_level(config.get_value("accesslevel.default"))
+        self._dataManager.set_access_levels(config.get_value("accesslevel.groups"))
 
         self._timer = Timer()
         self._timer.start_timer(self._update_all_clients, 250, False)
         self._timer.start_timer(self._update_all_client_servergroups, 250, False)
 
-        self._queryTracker = Bot.QueryManager.QueryTracker()
+        if config.get_value("channel_text"):
+            self._timer.start_timer(self._update_slaves, 250, False)
 
         self._callbacksValueChanged = {}
         self._chatCommands = {}
 
-        self._pluginList = []
         self._setup_plugins()
-
-        self._lastLine = ""
 
     def _setup_plugins(self):
         """!
@@ -168,7 +182,14 @@ class TeamspeakBot:
 
         while self._conn.is_connected() and self._message_available():
             self._handle_message()
-        self._timer.check_timers()
+
+        for idx in self._slaves:
+            slave = self._slaves[idx]
+            slave.process()
+
+        if hasattr(self, "_timer"):
+            self._timer.check_timers()
+
         if not self._conn.is_connected():
             if self.connect():
                 self.login_use()
@@ -205,7 +226,7 @@ class TeamspeakBot:
             if starts_with_c_i(message, "notifyclientmoved"):
                 self._call_callbacks(event, eventTypes.CLIENT_MOVED)
             if starts_with_c_i(message, "notifytextmessage"):
-                self._call_callbacks(event, eventTypes.PRIVATE_TEXT)
+                self._call_callbacks(event, eventTypes.TEXT)
             return
 
         if starts_with_c_i(message, "error"):
@@ -260,6 +281,7 @@ class TeamspeakBot:
 
         if event_type == eventTypes.CLIENT_JOINED:
             if int(event.args[0]["client_type"]) != 0:
+                self._dataManager.add_client(event.args[0]["clid"], event.args[0])
                 return
             self._on_client_joined(event)
             # This will be called inside the event handler,
@@ -267,21 +289,24 @@ class TeamspeakBot:
             # self._callMethodOnAllPlugins("on_client_joined", event)
 
         if event_type == eventTypes.CLIENT_LEFT:
-            if not self._dataManager.has_clid(event.args[0]["clid"]):
+            if self._dataManager.get_client_value(event.args[0]["clid"], "client_type", True) is not None and \
+                            int(self._dataManager.get_client_value(event.args[0]["clid"], "client_type", True)) != 0:
                 return
             self._call_method_on_all_plugins("on_client_left", event)
             self._on_client_left(event)
 
         if event_type == eventTypes.CLIENT_MOVED:
-            if not self._dataManager.has_clid(event.args[0]["clid"]):
+            if self._dataManager.get_client_value(event.args[0]["clid"], "client_type", True) is not None and \
+                            int(self._dataManager.get_client_value(event.args[0]["clid"], "client_type", True)) != 0:
                 return
             event = self._on_client_moved(event)
             self._call_method_on_all_plugins("on_client_moved", event)
 
-        if event_type == eventTypes.PRIVATE_TEXT:
-            if not self._dataManager.has_clid(event.args[0]["invokerid"]):
+        if event_type == eventTypes.TEXT:
+            if self._dataManager.get_client_value(event.args[0]["invokerid"], "client_type", True) is not None \
+                    and int(self._dataManager.get_client_value(event.args[0]["invokerid"], "client_type", True)) != 0:
                 return
-            event = self._on_private_text(event)
+            event = self._on_text(event)
             if event:
                 self._call_method_on_all_plugins("on_private_text", event)
 
@@ -369,9 +394,9 @@ class TeamspeakBot:
         event.args[0]["cid"] = old_channel
         return event
 
-    def _on_private_text(self, event):
+    def _on_text(self, event):
         """!
-        Called when the bot receives a private message. Will check whether the received
+        Called when the bot receives a private/channel message. Will check whether the received
         message is a command. When it is, it will check whether the senders accesslevel
         is high enough for the command and call the plugin callbacks.
 
@@ -397,15 +422,46 @@ class TeamspeakBot:
 
         chat_command = self._chatCommands[msg_splitted[0][1:]]
 
+        if chat_command.is_channel_command:
+            return event
+
         invoker_access_level = self._dataManager.get_access_level_by_clid(invokerid)
-        if invoker_access_level is None or chat_command.accessLevel > self._dataManager.get_access_level_by_clid(
-                invokerid):
+        if invoker_access_level is None or chat_command.accessLevel > invoker_access_level:
             self.send_command("sendtextmessage targetmode=1 target=%s msg=%s" %
                               (invokerid, escape("Your accesslevel is not high enough for this command.")))
             return event
 
-        chat_command.callback(invokerid, invokername, invokeruid, msg_splitted[1:])
+        chat_command.callback(int(invokerid), invokername, invokeruid, msg_splitted[1:])
         return event
+
+    def _on_channel_text(self, event):
+        if int(event.args[0]["targetmode"]) != 2:
+            return False
+
+        msg = event.args[0]["msg"]
+        invokerid = event.args[0]["invokerid"]
+        invokername = event.args[0]["invokername"]
+        invokeruid = event.args[0]["invokeruid"]
+
+        if not msg.startswith("."):
+            return self._call_method_on_all_plugins("on_channel_text", event)
+
+        msg_splitted = msg.split(" ")
+
+        if not msg_splitted[0][1:] in self._chatCommands:
+            return self._call_method_on_all_plugins("on_channel_text", event)
+
+        chat_command = self._chatCommands[msg_splitted[0][1:]]
+
+        if not chat_command.is_channel_command:
+            return self._call_method_on_all_plugins("on_channel_text", event)
+
+        invoker_access_level = self._dataManager.get_access_level_by_clid(invokerid)
+        if invoker_access_level is None or chat_command.accessLevel > invoker_access_level:
+            return self._call_method_on_all_plugins("on_channel_text", event)
+
+        chat_command.callback(int(invokerid), invokername, invokeruid, msg_splitted[1:])
+        return self._call_method_on_all_plugins("on_channel_text", event)
 
     def _on_connection_lost(self):
         """!
@@ -535,6 +591,16 @@ class TeamspeakBot:
         @return None
         """
 
+        self.send_command("whoami", self._on_initial_whoami)
+
+    def _on_initial_whoami(self, event):
+        """!
+        @brief Initializes the bots own client id and calls further init functions
+
+        @param event The event object containing data related to the sent query
+        @return None
+        """
+        self._my_clid = event.args[0]["client_id"]
         self.send_command("clientlist", self._on_initial_clientlist)
 
     def _on_initial_clientlist(self, event):
@@ -548,7 +614,7 @@ class TeamspeakBot:
 
         client_list = event.args
         client_list_without_server_queries = [client for client in client_list if client["client_type"] == '0']
-        self._dataManager.add_clients(client_list_without_server_queries, clear=True)
+        self._dataManager.add_clients(client_list, clear=True)
         self.send_command("channellist", self._on_initial_channellist, data=client_list_without_server_queries)
 
     def _on_initial_channellist(self, event):
@@ -563,14 +629,78 @@ class TeamspeakBot:
         self._dataManager.add_channels(event.args)
         self._call_method_on_all_plugins("on_initial_data", event.data, event.args)
 
+    # everything for slaves ( receiving channel messages ) here
+    def _update_slaves(self):
+        """!
+        Will initiate new slaves and delete the slaves sitting in empty channels. All those slaves
+        are used to relay channel text messages to the main bot in order to fire events.
+
+        @return None
+        """
+        channels_with_clients = set(
+            [int(self._dataManager.get_client_value(clid, "cid", True)) for clid in self._dataManager.get_clients()]
+        )
+        for cid in channels_with_clients:
+            if cid not in self._slaves:
+                self._add_slave(cid)
+        for cid in dict(self._slaves):
+            if cid not in channels_with_clients:
+                self._remove_slave(cid)
+
+    def _add_slave(self, cid):
+        """!
+        Adds a slave to the given channel. If a slave already exists this will do nothing.
+
+        @param cid The channel id to which the slave will join.
+        @return None
+        """
+        if cid in self._slaves:
+            return
+        self._slaves[cid] = BotChannelSlave(self._ip, self._port, self._user, self._password,
+                                            self._virtualServerId, cid, self._on_channel_text)
+
+    def _remove_slave(self, cid):
+        """!
+        Removes the slave from the given channel. If that channel has no slave this will do nothing.
+
+        @param cid The channel id from which the slave should be removed.
+        @return None
+        """
+        if cid not in self._slaves:
+            return
+
+        self._slaves[cid].kill()
+        del self._slaves[cid]
+
     # functions mainly intended for plugins
+
+    def set_value(self, key, value):
+        """!
+        @brief Sets a persistent value which is saved in the database and can be retrieved later.
+
+        @param key Identifier for you value
+        @param value Value to set
+        @return None
+        """
+        return self._dataManager.set_value(key, value)
+
+    def get_value(self, key, default_value=None):
+        """!
+        @brief Retrieves a persistent value identified by key which was set earlier.
+
+        @param key
+        @param default_value The default value to return when the key was not found
+        @return Value
+        """
+        return self._dataManager.get_value(key, default_value)
+
     def add_chat_command(self, command, description, access_level, callback, is_channel_command=False):
         """!
         @brief Adds a chat command.
 
-        Adds a chat command to the bot. When is_channel_command is false, a user needs to private message the bot in order
-        to trigger the command. Otherwise, the user needs to post that command in a channel. The command
-        needs to be prefixed with the needed prefix provided in the config file.
+        Adds a chat command to the bot. When is_channel_command is false, a user needs to private
+        message the bot in order to trigger the command. Otherwise, the user needs to post that
+        command in a channel. The command needs to be prefixed with the needed prefix provided in the config file.
 
         @param command The command the user needs to type ( without prefix )
         @param description A description of that command. Usefull in for help commands and similiar
@@ -635,22 +765,31 @@ class TeamspeakBot:
         self._callbacksValueChanged[key].append(callback)
 
     # simple server query wrappers starting from here
-    def send_server_notify_register(self, event, id=None):
+    def send_server_notify_register(self, event, idd=None):
         """!
         @brief Wraps servernotifyregister. See teamspeak query doc for more.
 
         @param event server|channel|textserver|textchannel|textprivate
-        @param id channelID
+        @param idd channelID
         @return None
         """
 
-        if id is not None:
-            self.send_command("servernotifyregister event=" + event + " id=" + str(id))
+        if idd is not None:
+            self.send_command("servernotifyregister event=" + event + " id=" + str(idd))
         else:
             self.send_command("servernotifyregister event=" + event)
 
+    def switch_to_channel(self, cid):
+        """!
+        @brief Switches the bot instance to the given channel id
+
+        @param cid The channel id the bot should switch into
+        @return None
+        """
+        self.send_command("clientmove clid=%s cid=%s" % (self._my_clid, cid))
+
     # more complex server query wrappers encapsulating multiple commands into one function
-    def login_use(self):
+    def login_use(self, register_for_events=True):
         """!
         @brief Logins with the provided credentials and choses a server.
 
@@ -658,17 +797,19 @@ class TeamspeakBot:
         After, it will call use with the provided virtual server id, register for all
         events and initialize the bot data.
 
+        @param register_for_events Whether the bot instance should register for events server|textprivate|channelk
         @return None
         """
 
         self.send_command("login {0} {1}".format(escape(self._user), escape(self._password)))
         self.send_command("use {0}".format(int(self._virtualServerId)))
-        self.register_for_all_events()
+        if register_for_events:
+            self.register_for_all_events()
         self._intialize_data()
 
     def register_for_all_events(self):
         """!
-        @brief Registers for the following events: server, textprivate, channel, textchannel
+        @brief Registers for the following events: server, textprivate, channel
 
         @return None
         """
@@ -676,4 +817,35 @@ class TeamspeakBot:
         self.send_server_notify_register("server", 0)
         self.send_server_notify_register("textprivate", 0)
         self.send_server_notify_register("channel", 0)
+        #  self.send_server_notify_register("textchannel")
+
+
+class BotChannelSlave(TeamspeakBot):
+    def __init__(self, ip, port=10011, user=None, password=None,
+                 virtual_server_id=None, cid=None, channel_text_callback=None):
+        super().__init__(ip, port, user, password, virtual_server_id, minimal=True)
+
+        success = self.connect()
+
+        if not success:
+            print("A slave had trouble to connect")
+            exit()
+
+        self.login_use(register_for_events=False)
+
+        self._target_cid = cid
+
         self.send_server_notify_register("textchannel")
+        self._channel_text_callback = channel_text_callback
+        self._cid = cid
+
+    def _on_initial_whoami(self, event):
+        self._my_clid = event.args[0]["client_id"]
+        self.switch_to_channel(self._target_cid)
+
+    def _on_text(self, event):
+        event.args[0]["cid"] = self._cid
+        self._channel_text_callback(event)
+
+    def kill(self):
+        self.disconnect()

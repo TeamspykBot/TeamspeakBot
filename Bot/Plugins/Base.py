@@ -18,5 +18,8 @@ class BasePlugin:
     def on_private_text(self, event):
         pass
 
+    def on_channel_text(self, event):
+        pass
+
     def on_connection_lost(self):
         pass

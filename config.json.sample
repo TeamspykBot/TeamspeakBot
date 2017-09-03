@@ -22,7 +22,8 @@
         "Normal": 1
       }
     },
-    "commandprefix": "."
+    "commandprefix": ".",
+    "channel_text": true
   },
   "production": {
     "mysql": {
@@ -46,6 +47,7 @@
         "Normal": 1
       }
     },
-    "commandprefix": "."
+    "commandprefix": ".",
+    "channel_text": true
   }
 }
