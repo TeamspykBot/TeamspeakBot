@@ -1,6 +1,6 @@
 # Introduction
 
-Every plugin should be its own file in Bot/Plugins. The bot will load all classes which end with "Plugin". The file should import `BasePlugin` from `Bot.Plugins.Base` and the class should inherit the imported `BasePlugin`. Further, the class needs to provide a \_\_init\_\_ method which takes one argument, the `bot_instance` and calls the parents \_\_init\_\_ method with that argument. Most minimal plugin setup:
+Every plugin should be its own file in Bot/Plugins. The bot will load all classes which end with "Plugin". The file should import `BasePlugin` from `Bot.Plugins.Base` and the class should inherit the imported `BasePlugin`. Further, the class needs to provide a `__init__` method which takes one argument, the `bot_instance` and calls the parents `__init__` method with that argument. Most minimal plugin setup:
 
 ```Python
 class MyFirstPlugin(BasePlugin):
@@ -56,3 +56,8 @@ Will be called when te bot receives a private message. See [data structures](dat
 ### on_connection_lost
 
 Will be called when the botr loses connection to the teamspeak server. The bot will try to reconnect and call on_initial_data as soon as a connection is established again.
+
+
+
+<br>
+## Managing (persistent) data

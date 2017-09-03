@@ -10,11 +10,11 @@ The bot will unescape and normalize all messages it receives from the teamspeak 
 
 ### Example:
 
-Teamspeak returns an array of clients for the command `clientlist`.  When you send clientlist via `send_command("clientlist", callback=lambda e: print(e.args))` teamspeak will answer with a list of all clients, looking like this:
+Teamspeak returns an array of clients for the command `clientlist`.  When you send the command `clientlist` via `send_command("clientlist", callback=lambda e: print(e.args))` teamspeak will answer with a list of all clients, looking like this:
 
 ```clid=1 cid=1 client_database_id=2 client_nickname=Client2 client_type=0|clid=3 cid=1 client_database_id=2 client_nickname=Client1 client_type=0|clid=5 cid=1 client_database_id=1 client_nickname=serveradmin\sfrom\s127.0.0.1:37322 client_type=1```
 
-The bot will normalize this to the following array of dictonaries:
+The bot will normalize this to the following array of dictionaries:
 
 ```[{'clid': '1', 'cid': '1', 'client_database_id': '2', 'client_nickname': 'Client2', 'client_type': '0'}, {'clid': '3', 'cid': '1', 'client_database_id': '2', 'client_nickname': 'Client1', 'client_type': '0'}, {'clid': '5', 'cid': '1', 'client_database_id': '1', 'client_nickname': 'serveradmin from 127.0.0.1:37322', 'client_type': '1'}]```
 <br>  
