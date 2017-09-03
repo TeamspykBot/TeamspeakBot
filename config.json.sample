@@ -23,7 +23,9 @@
       }
     },
     "commandprefix": ".",
-    "channel_text": true
+    "channel_text": true,
+    "load_all_plugins": false,
+    "plugin_list": ["Test"]
   },
   "production": {
     "mysql": {
@@ -48,6 +50,8 @@
       }
     },
     "commandprefix": ".",
-    "channel_text": true
+    "channel_text": true,
+    "load_all_plugins": false,
+    "plugin_list": []
   }
 }
