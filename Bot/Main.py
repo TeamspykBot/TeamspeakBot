@@ -93,8 +93,8 @@ class TeamspeakBot:
             plugin_path = os.path.join(os.path.dirname(__file__), "Plugins")
             plugin_list = os.listdir(plugin_path)
         else:
-            plugin_list = config.get_value("plugin_list")
-            plugin_list = [plugin+".py" for plugin in plugin_list]
+            plugin_list = config.get_value("plugin_list") or []
+            plugin_list = ["{0}.py".format(plugin) for plugin in plugin_list]
 
         imported_plugins = None
         for plugin in plugin_list:
@@ -110,7 +110,6 @@ class TeamspeakBot:
             return
 
         available_classes = inspect.getmembers(imported_plugins, inspect.isclass)
-        print(available_classes)
         for classes in available_classes:
             if classes[0].endswith("Plugin"):
                 self._pluginList.append(getattr(imported_plugins, classes[0])(self))

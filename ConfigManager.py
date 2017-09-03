@@ -29,6 +29,8 @@ class ConfigManager:
             return self._config[key]
         cfg = self._config
         for entry in key_path:
+            if entry not in cfg:
+                return None
             cfg = cfg[entry]
         return cfg
 
