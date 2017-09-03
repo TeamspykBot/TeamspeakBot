@@ -49,8 +49,15 @@ Will be called everytime a client moves between channels. See [data structures](
 Arguments:
 - event
 
-Will be called when te bot receives a private message. See [data structures](data-structures.md) for an overview about the structure of the arguments.
+Will be called when the bot receives a private message. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
+
+<br>
+### on_channel_text
+Arguments:
+- event
+
+Will be called when the bot receives a channel message. Due to teamspeak server query limitations, this requires to have an active bot instance in every ( occupied )channel. As this drains many slots, this behaviour can be toggled in the settings. Please note that turning off that behaviour also means that this callback will never be called. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 <br>
 ### on_connection_lost

@@ -38,3 +38,7 @@ The bot will normalize this to the following array of dictionaries:
 ## on_private_text event args
 
 ```[{'notifytextmessage': '', 'targetmode': '1', 'msg': 'Message Body', 'target': '14', 'invokerid': '1', 'invokername': 'Client2', 'invokeruid': 'CRhMp/NFyvdP1D8DDooQIr8gAWI='}]```
+
+<br>
+## on_channel_text
+```[{'notifytextmessage': '', 'targetmode': '2', 'msg': 'Hello', 'invokerid': '1', 'invokername': 'ClientName', 'invokeruid': 'CRhMp/NFyvdP1D8DDooQIr8gAWI=', 'cid': 2}]```
