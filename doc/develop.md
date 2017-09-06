@@ -1,6 +1,8 @@
 # Introduction
 
-Every plugin should be its own file in Bot/Plugins. The bot will load all classes which end with "Plugin". The file should import `BasePlugin` from `Bot.Plugins.Base` and the class should inherit the imported `BasePlugin`. Further, the class needs to provide a `__init__` method which takes one argument, the `bot_instance` and calls the parents `__init__` method with that argument. Most minimal plugin setup:
+Every plugin should be its own file in Bot/Plugins. The bot will load all classes which end with "Plugin". The file should import `BasePlugin` from `Bot.Plugins.Base` and the class should inherit the imported `BasePlugin`. Further, the class needs to provide a `__init__` method which takes one argument, the `bot_instance` and calls the parents `__init__` method with that argument. Also, all your classes which are supposed to get loaded by the teamspeakbot need to end in `Plugin`. E.g `HelpPlugin` or `AutoKickPlugin`.
+
+Most minimal plugin setup:
 
 ```Python
 class MyFirstPlugin(BasePlugin):

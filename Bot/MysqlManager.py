@@ -4,7 +4,7 @@ import pymysql
 
 class MysqlManager:
     def __init__(self):
-        self._gSQLConnection = None
+        self._connection = None
         self._cur = None
         self._host = None
         self._port = None
@@ -19,9 +19,9 @@ class MysqlManager:
         self._password = password
         self._db = db
         try:
-            self._gSQLConnection = pymysql.connect(host=host, port=port, user=user, passwd=password, db=db,
-                                                   autocommit=True, charset='utf8')
-            self._cur = self._gSQLConnection.cursor()
+            self._connection = pymysql.connect(host=host, port=port, user=user, passwd=password, db=db,
+                                               autocommit=True, charset='utf8', cursorclass=pymysql.cursors.DictCursor)
+            self._cur = self._connection.cursor()
         except pymysql.MySQLError as e:
             if e.args[0] == 2003:  # Could not connect to database
                 print(e.args[1])
@@ -66,23 +66,25 @@ class MysqlManager:
                            (int(cldbid), str(key), value))
 
     def get_client_value(self, cldbid, key, default_value=None):
-        self.execute_query("SELECT `value` FROM ClientSettings WHERE cldbid=%s AND `key`=%s", (int(cldbid), str(key)))
-        for row in self._cur:
-            return row[0]
-        return default_value
+        ret = self.execute_query("SELECT `value` "
+                                 "FROM ClientSettings "
+                                 "WHERE cldbid=%s AND `key`=%s", (int(cldbid), str(key))).fetchone()
+        if ret is None:
+            return default_value
+        return ret["value"]
 
     def get_client_values(self, cldbid):
-        self.execute_query("SELECT `key`, `value` FROM ClientSettings WHERE cldbid=%s", (int(cldbid)))
-        ret = {}
-        for row in self._cur:
-            ret[row[0]] = row[1]
+        ret = self.execute_query("SELECT `key`, `value` FROM ClientSettings WHERE cldbid=%s", (int(cldbid))).fetchall()
+        if not ret:
+            return {}
+        ret = {d["key"]: d["value"] for d in ret}
         return ret
 
     def get_value(self, key, default_value=None):
-        self.execute_query("SELECT `value` FROM Settings WHERE `key`=%s", key)
-        for row in self._cur:
-            return row[0]
-        return default_value
+        ret = self.execute_query("SELECT `value` FROM Settings WHERE `key`=%s", key).fetchone()
+        if ret is None:
+            return default_value
+        return ret["value"]
 
     def set_value(self, key, value):
         self.execute_query("REPLACE INTO Settings (`key`, value) VALUES (%s, %s);", (key, value))

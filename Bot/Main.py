@@ -770,6 +770,16 @@ class TeamspeakBot:
             self._callbacksValueChanged[key] = []
         self._callbacksValueChanged[key].append(callback)
 
+    def get_mysql_instance(self):
+        """!
+        @brief Returns a handle to the mysql instance to perform raw queries.
+
+        @return MysqlClass
+        """
+        return self._mysqlManager
+
+
+
     # simple server query wrappers starting from here
     def send_server_notify_register(self, event, idd=None):
         """!
