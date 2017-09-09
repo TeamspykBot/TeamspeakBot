@@ -96,7 +96,6 @@ class TeamspeakBot:
             plugin_list = config.get_value("plugin_list") or []
             plugin_list = ["{0}.py".format(plugin) for plugin in plugin_list]
 
-        imported_plugins = None
         for plugin in plugin_list:
             if not plugin.endswith(".py"):
                 continue
@@ -106,13 +105,13 @@ class TeamspeakBot:
 
             imported_plugins = importlib.import_module("Bot.Plugins." + plugin)
 
-        if imported_plugins is None:
-            return
+            if imported_plugins is None:
+                continue
 
-        available_classes = inspect.getmembers(imported_plugins, inspect.isclass)
-        for classes in available_classes:
-            if classes[0].endswith("Plugin"):
-                self._pluginList.append(getattr(imported_plugins, classes[0])(self))
+            available_classes = inspect.getmembers(imported_plugins, inspect.isclass)
+            for classes in available_classes:
+                if classes[0].endswith("Plugin"):
+                    self._pluginList.append(getattr(imported_plugins, classes[0])(self))
 
     def _init_networking(self, ip, port):
         """!
@@ -770,6 +769,43 @@ class TeamspeakBot:
             self._callbacksValueChanged[key] = []
         self._callbacksValueChanged[key].append(callback)
 
+    @staticmethod
+    def get_user_setting(key_path):
+        """!
+        @brief Returns the value of an user setting.
+
+        This function returns the value of an user setting.
+        These are values the user can define inside their config.json.
+        The key can be a path to a value ( separated with . )
+        which will correspond to a key nested inside the json document.
+
+        E.g:
+
+            key_path = MyPlugin.youtube.api_key
+
+        would correspond to the following structure inside config.json:
+
+        ```
+                {
+                    "chosen_config_namespace": {
+                        "plugins": {
+                            "MyPlugin": {
+                                "youtube": {
+                                    "api_key": "000000000000000"
+                                }
+                            }
+                        }
+                    }
+                }
+        ```
+
+        The config namespace and the plugins key be prepended automatically.
+
+        @param key_path The path to the value
+        @return The value at the given path
+        """
+        return config.get_value("plugins."+key_path)
+
     def get_mysql_instance(self):
         """!
         @brief Returns a handle to the mysql instance to perform raw queries.
@@ -777,8 +813,6 @@ class TeamspeakBot:
         @return MysqlClass
         """
         return self._mysqlManager
-
-
 
     # simple server query wrappers starting from here
     def send_server_notify_register(self, event, idd=None):
