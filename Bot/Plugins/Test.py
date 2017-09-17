@@ -1,7 +1,7 @@
-from Bot.Plugins.Base import BasePlugin
+from Bot.Plugins.Base import PluginBase
 
 
-class TestPlugin(BasePlugin):
+class TestPlugin(PluginBase):
     def __init__(self, bot_instance):
         super().__init__(bot_instance)
         # print("Test Plugin created")

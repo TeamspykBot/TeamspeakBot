@@ -1,7 +1,7 @@
 from Bot.Main import CommandResults
 
 
-class BasePlugin:
+class PluginBase:
     def __init__(self, bot_instance):
         self.bot_instance = bot_instance
         self.CommandResults = CommandResults
