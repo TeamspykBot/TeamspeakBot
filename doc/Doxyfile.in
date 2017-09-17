@@ -3,7 +3,8 @@ PROJECT_NUMBER          =
 
 INPUT                   = "../Bot/Main.py"
 OUTPUT_DIRECTORY        = "./generated/"
-                          
+EXCLUDE_SYMBOLS         = BotChannelSlave EventTypes connect disconnect process
+
 RECURSIVE               = YES
 
 EXTRACT_ALL             = NO
