@@ -5,6 +5,7 @@ class PluginBase:
     def __init__(self, bot_instance):
         self.bot_instance = bot_instance
         self.CommandResults = CommandResults
+        self.order = 0
 
     def on_initial_data(self, client_list, channel_list):
         pass

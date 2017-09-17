@@ -2,6 +2,8 @@
 
 Every plugin should be its own file in Bot/Plugins. The bot will load all classes which end with "Plugin". The file should import `PluginBase` from `Bot.Plugins.Base` and the class should inherit the imported `PluginBase`. Further, the class needs to provide a `__init__` method which takes one argument, the `bot_instance` and calls the parents `__init__` method with that argument. Also, all your classes which are supposed to get loaded by the teamspeakbot need to end in `Plugin`. E.g `HelpPlugin` or `AutoKickPlugin`.
 
+You can influence the order in which your plugin will receive callbacks by overwriting self.order in inside your plugins init method. Plugins will be sorted according to the order, meaning that with a lower order your plugin will get called before plugins with a higher order. This is useful if you need to manipulate the event object. The default order set in the PluginBase is 0.
+
 Most minimal plugin setup:
 
 ```Python

@@ -56,7 +56,7 @@ class TeamspeakBot:
         self._queryTracker = Bot.QueryManager.QueryTracker()
 
         self._slaves = {}  # cid: slave_instance
-        self._pluginList = []
+        self._plugin_list = []
         self._command_prefix = config.get_value("command_prefix")
 
         self._lastLine = ""
@@ -119,7 +119,11 @@ class TeamspeakBot:
             available_classes = inspect.getmembers(imported_plugins, inspect.isclass)
             for classes in available_classes:
                 if classes[0].endswith("Plugin"):
-                    self._pluginList.append(getattr(imported_plugins, classes[0])(self))
+                    self._plugin_list.append(getattr(imported_plugins, classes[0])(self))
+
+        self._plugin_list = sorted(self._plugin_list, key=lambda plugin: plugin.order)
+
+        pass
 
     def _init_networking(self, ip, port):
         """!
@@ -277,7 +281,7 @@ class TeamspeakBot:
         @return None
         """
 
-        for plugin in self._pluginList:
+        for plugin in self._plugin_list:
             getattr(plugin, method_name)(*args)
 
     def _call_callbacks(self, event, event_type):
