@@ -14,36 +14,47 @@ def log(message):
 
 
 class ChatCommand:
-    def __init__(self, command, description, access_level, callback, is_channel_command):
-        self.command = command
+    def __init__(self, command, description, access_level, callback, args, is_channel_command):
+        self.command = command.lower()
+        self.original_command = command
         self.description = description
         self.accessLevel = access_level
         self.is_channel_command = is_channel_command
         self.callback = callback
+        self.args = args
 
 
 class Timer:
     def __init__(self):
-        self._timerList = []
+        self._timer_list = {}
+        self._timer_counter = 0
 
     def start_timer(self, callback, interval, is_single_shot=False, *args):
-        self._timerList.append([callback, time_since_epoch() + interval, interval, is_single_shot, args])
+        self._timer_counter += 1
+        self._timer_list[self._timer_counter] = [callback, time_since_epoch()+interval, interval, is_single_shot, args]
+        return self._timer_counter
+
+    def remove_timer(self, timer_id):
+        if timer_id in self._timer_list:
+            self._timer_list.pop(timer_id)
+            return True
+        return False
 
     def check_timers(self):
-        for i in range(len(self._timerList) - 1, 0 - 1, -1):
-            timer = self._timerList[i]
+        for i in self._timer_list:
+            timer = self._timer_list[i]
             if time_since_epoch() > timer[1]:
                 timer[0](*timer[4])
                 timer[1] = time_since_epoch() + timer[2]
                 if timer[3]:
-                    self._timerList.pop(i)
+                    self._timer_list.pop(i)
 
     @staticmethod
     def get_seconds(seconds):
         return 1000 * seconds
 
     def reset(self):
-        self._timerList.clear()
+        self._timer_list.clear()
 
 
 class Event:

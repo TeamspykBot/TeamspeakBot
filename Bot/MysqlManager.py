@@ -29,7 +29,7 @@ class MysqlManager:
             else:
                 raise
 
-    def execute_query(self, sql_query, args=None):
+    def execute_query(self, sql_query, *args):
         try:
             self._cur.execute(sql_query, args)
             return self._cur
@@ -44,14 +44,14 @@ class MysqlManager:
     def add_online_client(self, clid, cldbid, name, remote_ip):
         try:
             self.execute_query("INSERT INTO OnlineClients (`clid`, `cldbid`, `name`, `remote_ip`) "
-                               "VALUES (%s, %s, %s, %s);", (str(clid), str(cldbid), str(name), str(remote_ip)))
+                               "VALUES (%s, %s, %s, %s);", str(clid), str(cldbid), str(name), str(remote_ip))
             return True
         except pymysql.IntegrityError:
             return False
 
     def remove_online_client(self, clid):
         try:
-            self.execute_query("DELETE FROM OnlineClients WHERE `clid` = %s", (str(clid)))
+            self.execute_query("DELETE FROM OnlineClients WHERE `clid` = %s", str(clid))
             if self._cur.rowcount > 0:
                 return True
             return False
@@ -63,18 +63,18 @@ class MysqlManager:
 
     def set_client_value(self, cldbid, key, value):
         self.execute_query("REPLACE INTO ClientSettings (cldbid, `key`, value) VALUES (%s, %s, %s);",
-                           (int(cldbid), str(key), value))
+                           int(cldbid), str(key), value)
 
     def get_client_value(self, cldbid, key, default_value=None):
         ret = self.execute_query("SELECT `value` "
                                  "FROM ClientSettings "
-                                 "WHERE cldbid=%s AND `key`=%s", (int(cldbid), str(key))).fetchone()
+                                 "WHERE cldbid=%s AND `key`=%s", int(cldbid), str(key)).fetchone()
         if ret is None:
             return default_value
         return ret["value"]
 
     def get_client_values(self, cldbid):
-        ret = self.execute_query("SELECT `key`, `value` FROM ClientSettings WHERE cldbid=%s", (int(cldbid))).fetchall()
+        ret = self.execute_query("SELECT `key`, `value` FROM ClientSettings WHERE cldbid=%s", int(cldbid)).fetchall()
         if not ret:
             return {}
         ret = {d["key"]: d["value"] for d in ret}
@@ -87,4 +87,4 @@ class MysqlManager:
         return ret["value"]
 
     def set_value(self, key, value):
-        self.execute_query("REPLACE INTO Settings (`key`, value) VALUES (%s, %s);", (key, value))
+        self.execute_query("REPLACE INTO Settings (`key`, value) VALUES (%s, %s);", key, value)

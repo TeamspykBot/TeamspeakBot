@@ -14,11 +14,18 @@ from Bot.Utility import starts_with_c_i, normalize_message, Event, escape, Timer
 
 from Globals import config
 
-eventTypes = Enum("EventTypes", "CLIENT_JOINED "
-                                "CLIENT_LEFT "
-                                "CLIENT_MOVED "
-                                "TEXT "
-                                "LOST_CONNECTION ")
+
+class EventTypes(Enum):
+    CLIENT_JOINED = 0
+    CLIENT_LEFT = 1
+    CLIENT_MOVED = 2
+    TEXT = 3
+    LOST_CONNECTION = 4
+
+
+class CommandResults(Enum):
+    ## Used to indicate that the user is missing arguments. The bot will resend the command structure to the user
+    INVALID_USE = 1
 
 
 class TeamspeakBot:
@@ -50,6 +57,7 @@ class TeamspeakBot:
 
         self._slaves = {}  # cid: slave_instance
         self._pluginList = []
+        self._command_prefix = config.get_value("command_prefix")
 
         self._lastLine = ""
 
@@ -160,7 +168,7 @@ class TeamspeakBot:
         try:
             return self._conn.message_available()
         except socket.error:
-            self._call_callbacks(None, eventTypes.LOST_CONNECTION)
+            self._call_callbacks(None, EventTypes.LOST_CONNECTION)
 
     def _get_next_message(self):
         """!
@@ -172,7 +180,7 @@ class TeamspeakBot:
         try:
             return self._conn.get_next_message()
         except socket.error:
-            self._call_callbacks(None, eventTypes.LOST_CONNECTION)
+            self._call_callbacks(None, EventTypes.LOST_CONNECTION)
 
     def process(self):
         """!
@@ -225,13 +233,13 @@ class TeamspeakBot:
             self._lastLine = message
             event = Event(args)
             if starts_with_c_i(message, "notifycliententerview"):
-                self._call_callbacks(event, eventTypes.CLIENT_JOINED)
+                self._call_callbacks(event, EventTypes.CLIENT_JOINED)
             if starts_with_c_i(message, "notifyclientleftview"):
-                self._call_callbacks(event, eventTypes.CLIENT_LEFT)
+                self._call_callbacks(event, EventTypes.CLIENT_LEFT)
             if starts_with_c_i(message, "notifyclientmoved"):
-                self._call_callbacks(event, eventTypes.CLIENT_MOVED)
+                self._call_callbacks(event, EventTypes.CLIENT_MOVED)
             if starts_with_c_i(message, "notifytextmessage"):
-                self._call_callbacks(event, eventTypes.TEXT)
+                self._call_callbacks(event, EventTypes.TEXT)
             return
 
         if starts_with_c_i(message, "error"):
@@ -284,7 +292,7 @@ class TeamspeakBot:
         if event is not None:
             event.Bot = self
 
-        if event_type == eventTypes.CLIENT_JOINED:
+        if event_type == EventTypes.CLIENT_JOINED:
             if int(event.args[0]["client_type"]) != 0:
                 self._dataManager.add_client(event.args[0]["clid"], event.args[0])
                 return
@@ -293,29 +301,32 @@ class TeamspeakBot:
             # as we need to update the client first to gain all necessary informations
             # self._callMethodOnAllPlugins("on_client_joined", event)
 
-        if event_type == eventTypes.CLIENT_LEFT:
-            if self._dataManager.get_client_value(event.args[0]["clid"], "client_type", True) is not None and \
-                            int(self._dataManager.get_client_value(event.args[0]["clid"], "client_type", True)) != 0:
+        if event_type == EventTypes.CLIENT_LEFT:
+            if self._dataManager.get_client_value(event.args[0]["clid"], "client_type", None, True) is not None and \
+                            int(self._dataManager.get_client_value(event.args[0]["clid"], "client_type", None,
+                                                                   True)) != 0:
                 return
             self._call_method_on_all_plugins("on_client_left", event)
             self._on_client_left(event)
 
-        if event_type == eventTypes.CLIENT_MOVED:
-            if self._dataManager.get_client_value(event.args[0]["clid"], "client_type", True) is not None and \
-                            int(self._dataManager.get_client_value(event.args[0]["clid"], "client_type", True)) != 0:
+        if event_type == EventTypes.CLIENT_MOVED:
+            if self._dataManager.get_client_value(event.args[0]["clid"], "client_type", None, True) is not None and \
+                            int(self._dataManager.get_client_value(event.args[0]["clid"], "client_type", None,
+                                                                   True)) != 0:
                 return
             event = self._on_client_moved(event)
             self._call_method_on_all_plugins("on_client_moved", event)
 
-        if event_type == eventTypes.TEXT:
-            if self._dataManager.get_client_value(event.args[0]["invokerid"], "client_type", True) is not None \
-                    and int(self._dataManager.get_client_value(event.args[0]["invokerid"], "client_type", True)) != 0:
+        if event_type == EventTypes.TEXT:
+            if self._dataManager.get_client_value(event.args[0]["invokerid"], "client_type", None, True) is not None \
+                    and int(
+                        self._dataManager.get_client_value(event.args[0]["invokerid"], "client_type", None, True)) != 0:
                 return
             event = self._on_text(event)
             if event:
                 self._call_method_on_all_plugins("on_private_text", event)
 
-        if event_type == eventTypes.LOST_CONNECTION:
+        if event_type == EventTypes.LOST_CONNECTION:
             if self._conn.is_connected():
                 self._call_method_on_all_plugins("on_connection_lost")
                 self._on_connection_lost()
@@ -394,7 +405,7 @@ class TeamspeakBot:
 
         clid = event.args[0]["clid"]
         ctid = event.args[0]["ctid"]
-        old_channel = self._dataManager.get_client_value(clid, "cid", True)
+        old_channel = self._dataManager.get_client_value(clid, "cid", None, True)
         self._dataManager.set_client_value(clid, "cid", ctid, True)
         event.args[0]["cid"] = old_channel
         return event
@@ -417,15 +428,15 @@ class TeamspeakBot:
         invokername = event.args[0]["invokername"]
         invokeruid = event.args[0]["invokeruid"]
 
-        if not msg.startswith("."):
+        if not msg.startswith(self._command_prefix):
             return event
 
         msg_splitted = msg.split(" ")
 
-        if not msg_splitted[0][1:] in self._chatCommands:
+        if not msg_splitted[0][1:].lower() in self._chatCommands:
             return event
 
-        chat_command = self._chatCommands[msg_splitted[0][1:]]
+        chat_command = self._chatCommands[msg_splitted[0][1:].lower()]
 
         if chat_command.is_channel_command:
             return event
@@ -436,8 +447,23 @@ class TeamspeakBot:
                               (invokerid, escape("Your accesslevel is not high enough for this command.")))
             return event
 
-        chat_command.callback(int(invokerid), invokername, invokeruid, msg_splitted[1:])
+        result = chat_command.callback(int(invokerid), invokername, invokeruid, msg_splitted[1:])
+        self._process_command_result(invokerid, chat_command, result)
+
         return event
+
+    def _process_command_result(self, invokerid, chat_command, result):
+        """!
+        @brief Processes the result of a called callback of a command.
+
+        @param result The result of the called command callback
+        @return None
+        """
+        if result == CommandResults.INVALID_USE:
+            self.send_text_to_client(invokerid,
+                                     "Invalid command! Please use {0}{1} {2}".format(self._command_prefix,
+                                                                                     chat_command.original_command,
+                                                                                     " ".join(chat_command.args)))
 
     def _on_channel_text(self, event):
         if int(event.args[0]["targetmode"]) != 2:
@@ -579,6 +605,8 @@ class TeamspeakBot:
         @param err_callback A callback which will be called when the query failed
         @return Boolean. True if the message was sent, false otherwise.
         """
+        if not self._conn.is_connected():
+            return False
 
         query = Bot.QueryManager.Query(callback, data, message, err_callback)
         self._queryTracker.add_query(query)
@@ -586,7 +614,7 @@ class TeamspeakBot:
             self._conn.send_message(message + "\n\r")
             return True
         except socket.error:
-            self._call_callbacks(None, eventTypes.LOST_CONNECTION)
+            self._call_callbacks(None, EventTypes.LOST_CONNECTION)
             return False
 
     def _intialize_data(self):
@@ -643,7 +671,8 @@ class TeamspeakBot:
         @return None
         """
         channels_with_clients = set(
-            [int(self._dataManager.get_client_value(clid, "cid", True)) for clid in self._dataManager.get_clients()]
+            [int(self._dataManager.get_client_value(clid, "cid", None, True)) for clid in
+             self._dataManager.get_clients()]
         )
         for cid in channels_with_clients:
             if cid not in self._slaves:
@@ -699,7 +728,7 @@ class TeamspeakBot:
         """
         return self._dataManager.get_value(key, default_value)
 
-    def add_chat_command(self, command, description, access_level, callback, is_channel_command=False):
+    def add_chat_command(self, command, description, access_level, callback, args=None, is_channel_command=False):
         """!
         @brief Adds a chat command.
 
@@ -707,19 +736,37 @@ class TeamspeakBot:
         message the bot in order to trigger the command. Otherwise, the user needs to post that
         command in a channel. The command needs to be prefixed with the needed prefix provided in the config file.
 
+        Your callback can return predefined values to indicate its result or state, e.g when the user
+        did not provide all needed arguments you can return self.bot_instance.CommandResults.INVALID_USE to
+        trigger a message to the sender indicating the right command structure. All possible values are defined in
+        CommandResults
+
         @param command The command the user needs to type ( without prefix )
         @param description A description of that command. Usefull in for help commands and similiar
         @param access_level The minimum accesslevel required for the command.
         @param callback A callback to call when a user triggers a command
+        @param args An array of strings of args you expect. You have to parse them yourself, this is only to help the
+                    user about expected arguments.
         @param is_channel_command Whether the command should trigger in channels or in private messages
         @return None
         """
 
         if command in self._chatCommands:
             return False
-        self._chatCommands[command] = ChatCommand(command, description, access_level, callback, is_channel_command)
 
-    def get_client_value(self, clid, key):
+        self._chatCommands[command.lower()] = ChatCommand(command, description, int(access_level), callback,
+                                                          args,
+                                                          is_channel_command)
+
+    def get_clients(self):
+        """!
+        @brief Returns an array of currently connected client ids. This excludes server query clients.
+
+        @return Array of integers
+        """
+        return self._dataManager.get_clients()
+
+    def get_client_value(self, clid, key, default_value=None):
         """!
         @brief Retrieves a client value.
 
@@ -731,10 +778,12 @@ class TeamspeakBot:
 
         @param clid The client id whose value you want to retrieve
         @param key The key whose value you want to retrieve
-        @return The value
+        @param default_value The value to return when the clid does not exist or the key could not be found
+        @return The value or the default_value of no entry was found
         """
-
-        value = self._dataManager.get_client_value(clid, key)
+        if clid is None:
+            return default_value
+        value = self._dataManager.get_client_value(clid, key, default_value)
         return value
 
     def set_client_value(self, clid, key, value, persistent=False):
@@ -804,7 +853,52 @@ class TeamspeakBot:
         @param key_path The path to the value
         @return The value at the given path
         """
-        return config.get_value("plugins."+key_path)
+        return config.get_value("plugins." + key_path)
+
+    def start_timer(self, callback, interval, is_single_shot=False, *args):
+        """!
+        @brief A timer will be started and the callback will be called after interval seconds with the given args.
+
+        A timer will be started an the callback will be called after interval seconds. When is_single_shot
+        was set to true, the timer will be automatically removed after it was fired. All additional args are passed
+        onto the given callback.
+
+        @param callback The callback to call after the interval
+        @param interval The time between successive calls
+        @param is_single_shot Whether the timer will be deleted after it fired the first time
+        @param args Additional args to pass onto the callback
+        @return Integer A identifier for the timer used to delete it
+        """
+        self._timer.start_timer(callback, interval, is_single_shot, *args)
+
+    def stop_timer(self, timer_id):
+        """!
+        @brief Deletes the set timer with the given id. Returns true when a timer with that id was deleted.
+
+        @param timer_id The id returned by start_timer for the started timer.
+        @return True when the timer was found and deleted, false otherwise.
+        """
+        if timer_id is None:
+            return False
+        return self._timer.remove_timer(timer_id)
+
+    def get_client_cldbid_by_clid(self, clid):
+        """!
+        @brief Returns the client database id which belongs to the given client id.
+
+        @param clid The client id
+        @return The client database id or none
+        """
+        return self._dataManager.get_client_cldbid_by_clid(clid)
+
+    def get_client_clid_by_cldbid(self, cldbid):
+        """!
+        @brief Returns the client id which belongs to the given client database id.
+
+        @param cldbid The client database id
+        @return The client id or none
+        """
+        return self._dataManager.get_client_clid_by_cldbid(cldbid)
 
     def get_mysql_instance(self):
         """!
@@ -813,6 +907,20 @@ class TeamspeakBot:
         @return MysqlClass
         """
         return self._mysqlManager
+
+    def execute_query(self, query, *args):
+        """!
+        @brief Executes a raw query on the mysql database.
+
+        We are using pymysql with a dict cursor in the backend. Refer to the
+        pymysql documentation for more information: http://pymysql.readthedocs.io/en/latest/modules/cursors.html
+        This function wraps "execute" and the args will be passed on.
+
+        @param query:
+        @param args A
+        @return The cursor object
+        """
+        return self._mysqlManager.execute_query(query, *args)
 
     # simple server query wrappers starting from here
     def send_server_notify_register(self, event, idd=None):
@@ -837,6 +945,53 @@ class TeamspeakBot:
         @return None
         """
         self.send_command("clientmove clid=%s cid=%s" % (self._my_clid, cid))
+
+    def servergroupaddclient(self, sgid, cldbid, callback=None, data=None, err_callback=None):
+        """!
+        @brief Adds the given client ot the given servergroup
+
+        @param sgid The id of the servergroup which the client will receive
+        @param cldbid The database id of the client which will receive the servergroup
+        @param callback Will be called when the query result are received
+        @param data Additional data to pass to the callback
+        @param err_callback Will be called when the query results in a error
+        @return None
+        """
+
+        self.send_command("servergroupaddclient sgid={0} cldbid={1}".format(
+            int(sgid), int(cldbid)
+        ), callback, data, err_callback)
+
+    def servergroupdelclient(self, sgid, cldbid, callback=None, data=None, err_callback=None):
+        """!
+        @brief Removes the given client from the given servergroup
+
+        @param sgid The id of the servergroup from which the client will be removed
+        @param cldbid The database id of the client which will be removed from the given servergroup
+        @param callback Will be called when the query result are received
+        @param data Additional data to pass to the callback
+        @param err_callback Will be called when the query results in a error
+        @return None
+        """
+
+        self.send_command("servergroupdelclient sgid={0} cldbid={1}".format(
+            int(sgid), int(cldbid)
+        ), callback, data, err_callback)
+
+    def send_text_to_client(self, clid, message, callback=None, data=None, err_callback=None):
+        """!
+        @brief Sends a message to a client
+
+        @param clid The client id which will receive the message
+        @param message The message to send to the client
+        @param callback Will be called when the query result are received
+        @param data Additional data to pass to the callback
+        @param err_callback Will be called when the query results in a error
+        @return None
+        """
+        self.send_command("sendtextmessage targetmode=1 target={0} msg={1}".format(
+            clid, escape(message)
+        ), callback, data, err_callback)
 
     # more complex server query wrappers encapsulating multiple commands into one function
     def login_use(self, register_for_events=True):

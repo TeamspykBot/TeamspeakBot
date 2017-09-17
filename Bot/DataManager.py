@@ -8,16 +8,16 @@ class DataManager:
         self._settings = {}
 
     def get_client_cldbid_by_clid(self, clid):
-        for cldbid in self._clientList:
-            client = self._clientList[cldbid]
-            if client["teamspeak_data"]["clid"] == str(clid):
-                return int(client["teamspeak_data"]["client_database_id"])
-        return None
+        if not int(clid) in self._clientList:
+            return None
+        return int(self._clientList[clid]["teamspeak_data"]["client_database_id"])
 
     def get_client_clid_by_cldbid(self, cldbid):
-        if not int(cldbid) in self._clientList:
-            return None
-        return int(self._clientList[cldbid]["teamspeak_data"]["clid"])
+        for clid in self._clientList:
+            client = self._clientList[clid]
+            if client["teamspeak_data"]["client_database_id"] == str(cldbid):
+                return int(clid)
+        return None
 
     def add_client(self, clid, client_data):
         if self._mysqlManager:
@@ -68,7 +68,7 @@ class DataManager:
         if clid not in self._clientList:
             return False
 
-        old_value = self.get_client_value(clid, key, teamspeak_data)
+        old_value = self.get_client_value(clid, key, None, teamspeak_data)
 
         namespace = "teamspeak_data" if teamspeak_data else "custom_data"
 
@@ -78,19 +78,19 @@ class DataManager:
             data_changed_callback(clid, key, old_value, value)
         return True
 
-    def get_client_value(self, clid, key, teamspeak_data=None):
+    def get_client_value(self, clid, key, default_value=None, teamspeak_data=None):
         clid = int(clid)
         key = str(key)
 
         if teamspeak_data is None:
-            return self._get_client_value_for_namespace(clid, key, "teamspeak_data") or \
-                   self._get_client_value_for_namespace(clid, key, "custom_data")
+            return self._get_client_value_for_namespace(clid, key, "teamspeak_data", default_value) or \
+                   self._get_client_value_for_namespace(clid, key, "custom_data", default_value)
 
         if teamspeak_data is True:
-            return self._get_client_value_for_namespace(clid, key, "teamspeak_data")
+            return self._get_client_value_for_namespace(clid, key, "teamspeak_data", default_value)
 
         if teamspeak_data is False:
-            return self._get_client_value_for_namespace(clid, key, "custom_data")
+            return self._get_client_value_for_namespace(clid, key, "custom_data", default_value)
 
     def set_persistent_client_value(self, clid, key, value):
         if self._mysqlManager is None:
@@ -105,14 +105,14 @@ class DataManager:
         self._clientList[clid]["custom_data"][key] = value
         return True
 
-    def _get_client_value_for_namespace(self, clid, key, namespace):
+    def _get_client_value_for_namespace(self, clid, key, namespace, default_value=None):
         clid = int(clid)
         if clid not in self._clientList:
-            return None
+            return default_value
         if namespace not in self._clientList[clid]:
-            return None
+            return default_value
         if key not in self._clientList[clid][namespace]:
-            return None
+            return default_value
         return self._clientList[clid][namespace][key]
 
     def add_client_servergroup(self, clid, sgid, name):

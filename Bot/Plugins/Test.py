@@ -12,7 +12,7 @@ class TestPlugin(BasePlugin):
         if len(client_list) <= 0:
             return
         # self._bot_instance.send_command("clientlist", callback=lambda e: print(e.args))
-        # self._bot_instance.send_command("sendtextmessage target=%s targetmode=1 msg=Hello" % client_list[0]["clid"])
+        self.bot_instance.send_command("sendtextmessage target=%s targetmode=1 msg=Hello" % client_list[0]["clid"])
         # self._bot_instance.add_chat_command("test1", "This is a test command", 0, self.on_test_command)
         # self._bot_instance.add_chat_command("test2", "This is a test command", 0, self.on_test_command, True)
         # self._bot_instance.add_chat_command("test2", "This is a test command", 5, self.on_test_command)

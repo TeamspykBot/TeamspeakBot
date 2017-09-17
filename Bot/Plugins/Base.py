@@ -1,7 +1,10 @@
-class BasePlugin:
+from Bot.Main import CommandResults
 
+
+class BasePlugin:
     def __init__(self, bot_instance):
-        self._bot_instance = bot_instance
+        self.bot_instance = bot_instance
+        self.CommandResults = CommandResults
 
     def on_initial_data(self, client_list, channel_list):
         pass
