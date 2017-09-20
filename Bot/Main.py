@@ -61,6 +61,9 @@ class TeamspeakBot:
 
         self._lastLine = ""
 
+        self._timer = Timer()
+        self._timer.start_timer(self._send_heartbeat, 60000, False)
+
         if minimal:
             self._dataManager = Bot.DataManager.DataManager(None)
             self._dataManager.set_default_access_level(config.get_value("accesslevel.default"))
@@ -78,7 +81,6 @@ class TeamspeakBot:
         self._dataManager.set_default_access_level(config.get_value("accesslevel.default"))
         self._dataManager.set_access_levels(config.get_value("accesslevel.groups"))
 
-        self._timer = Timer()
         self._timer.start_timer(self._update_all_clients, 250, False)
         self._timer.start_timer(self._update_all_client_servergroups, 250, False)
 
@@ -510,10 +512,11 @@ class TeamspeakBot:
         self._conn.clear_message_buffer()
         self._dataManager.clear_all_data()
         self._queryTracker.reset()
+        self._remove_all_slaves()
 
     def _update_all_clients(self):
         """!
-        Iterates through all online clients and calls _update_client on them
+        @brief Iterates through all online clients and calls _update_client on them
 
         @return None
         """
@@ -524,7 +527,7 @@ class TeamspeakBot:
 
     def _update_client(self, clid):
         """!
-        Updates a single client. Calls _update_client_callback as a callback.
+        @brief Updates a single client. Calls _update_client_callback as a callback.
 
         @param clid The clientid of the client to update
         @return None
@@ -546,7 +549,7 @@ class TeamspeakBot:
 
     def _on_client_value_changed(self, clid, key, old_value, value):
         """!
-        Called when a client value changes. Will dispatch this change to all registered callbacks.
+        @brief Called when a client value changes. Will dispatch this change to all registered callbacks.
 
         @param clid The client id of the client whose value changed
         @param key The key of the changed value
@@ -562,7 +565,7 @@ class TeamspeakBot:
 
     def _update_all_client_servergroups(self):
         """!
-        Updates the servergroups of all clients. Needed to keep track of the access level.
+        @brief Updates the servergroups of all clients. Needed to keep track of the access level.
 
         @return None
         """
@@ -573,7 +576,7 @@ class TeamspeakBot:
 
     def _update_client_servergroups(self, clid):
         """!
-        Updates the servergroups of a single client. Has _update_client_servergroups_callback as its callback.
+        @brief Updates the servergroups of a single client. Has _update_client_servergroups_callback as its callback.
 
         @param clid The client whose servergroups to update.
         @return None
@@ -587,13 +590,21 @@ class TeamspeakBot:
 
     def _update_client_servergroups_callback(self, event):
         """!
-        Updates the client servergroups in the datamanager.
+        @brief Updates the client servergroups in the datamanager.
 
         @param event The event object containing data related to the sent query
         @return None
         """
 
         self._dataManager.add_client_servergroups(event.data, event.args, True)
+
+    def _send_heartbeat(self):
+        """
+        @brief Sends an heartbeat to the server to avoid getting the connection dropped due to inactivity
+
+        :@eturn None
+        """
+        self.send_command("whoami")
 
     def send_command(self, message, callback=None, data=None, err_callback=None):
         """!
@@ -710,6 +721,15 @@ class TeamspeakBot:
         self._slaves[cid].kill()
         del self._slaves[cid]
 
+    def _remove_all_slaves(self):
+        """
+        @brief Disconnects and removes all slaves
+
+        @return None
+        """
+        for cid in dict(self._slaves):
+            self._remove_slave(cid)
+
     # functions mainly intended for plugins
 
     def set_value(self, key, value):
@@ -732,7 +752,7 @@ class TeamspeakBot:
         """
         return self._dataManager.get_value(key, default_value)
 
-    def add_chat_command(self, command, description, access_level, callback, args=None, is_channel_command=False):
+    def add_chat_command(self, command, description, access_level, callback, args=[], is_channel_command=False):
         """!
         @brief Adds a chat command.
 
@@ -769,6 +789,14 @@ class TeamspeakBot:
         @return Array of integers
         """
         return self._dataManager.get_clients()
+
+    def get_clients_cldbid(self):
+        """!
+        @brief Returns an array of currently connected client database ids. This excludes server query clients.
+
+        @return Array of integers
+        """
+        return self._dataManager.get_clients_cldbid()
 
     def get_client_value(self, clid, key, default_value=None):
         """!
@@ -885,6 +913,24 @@ class TeamspeakBot:
         if timer_id is None:
             return False
         return self._timer.remove_timer(timer_id)
+
+    def is_clid_online(self, clid):
+        """!
+        @brief Returns true when the given clid is currently online
+
+        @param clid The client id to check
+        @return True when the clid is online, false otherwise
+        """
+        return self.get_client_cldbid_by_clid(clid) is not None
+
+    def is_cldbid_online(self, cldbid):
+        """!
+        @brief Returns true when the given cldbid is currently online
+
+        @param cldbid The client database id to check
+        @return True when the cldbid is online, false otherwise
+        """
+        return self.get_client_clid_by_cldbid(cldbid) is not None
 
     def get_client_cldbid_by_clid(self, clid):
         """!

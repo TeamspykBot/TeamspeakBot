@@ -41,7 +41,7 @@ class Timer:
         return False
 
     def check_timers(self):
-        for i in self._timer_list:
+        for i in dict(self._timer_list):
             timer = self._timer_list[i]
             if time_since_epoch() > timer[1]:
                 timer[0](*timer[4])

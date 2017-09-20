@@ -8,7 +8,8 @@ class DataManager:
         self._settings = {}
 
     def get_client_cldbid_by_clid(self, clid):
-        if not int(clid) in self._clientList:
+        clid = int(clid)
+        if clid not in self._clientList:
             return None
         return int(self._clientList[clid]["teamspeak_data"]["client_database_id"])
 
@@ -58,6 +59,11 @@ class DataManager:
 
     def get_clients(self):
         wsq = [client for client in self._clientList if
+               self._clientList[client]["teamspeak_data"]["client_type"] == '0']
+        return list(wsq)
+
+    def get_clients_cldbid(self):
+        wsq = [self._clientList[client]["teamspeak_data"]["client_database_id"] for client in self._clientList if
                self._clientList[client]["teamspeak_data"]["client_type"] == '0']
         return list(wsq)
 
