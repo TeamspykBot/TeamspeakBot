@@ -18,7 +18,7 @@ class ChatCommand:
         self.command = command.lower()
         self.original_command = command
         self.description = description
-        self.accessLevel = access_level
+        self.accesslevel = access_level
         self.is_channel_command = is_channel_command
         self.callback = callback
         self.args = args

@@ -450,7 +450,7 @@ class TeamspeakBot:
             return event
 
         invoker_access_level = self._dataManager.get_access_level_by_clid(invokerid)
-        if invoker_access_level is None or chat_command.accessLevel > invoker_access_level:
+        if invoker_access_level is None or chat_command.accesslevel > invoker_access_level:
             self.send_command("sendtextmessage targetmode=1 target=%s msg=%s" %
                               (invokerid, escape("Your accesslevel is not high enough for this command.")))
             return event
@@ -496,7 +496,7 @@ class TeamspeakBot:
             return self._call_method_on_all_plugins("on_channel_text", event)
 
         invoker_access_level = self._dataManager.get_access_level_by_clid(invokerid)
-        if invoker_access_level is None or chat_command.accessLevel > invoker_access_level:
+        if invoker_access_level is None or chat_command.accesslevel > invoker_access_level:
             return self._call_method_on_all_plugins("on_channel_text", event)
 
         chat_command.callback(int(invokerid), invokername, invokeruid, msg_splitted[1:])
@@ -817,6 +817,22 @@ class TeamspeakBot:
                                                           args,
                                                           is_channel_command)
 
+    def get_all_commands(self):
+        """!
+        Returns an dictionary with an instance of all commands. An instance holds the following members:
+
+        command - The command, converted to lowercase
+        original_command - The original command, as it was provided by the plugin author ( no case conversion )
+        description - A description of that command, as provided by the plugin author
+        accesslevel - The required accesslevel for that command
+        is_channel_command - Whether is is a channel command or noth
+        callback - The callback to call when the command was executed by a user
+        args - The args of that command, an array of ( one-word ) strings used to describe possible args of that command
+
+        @return An dictionary of commands, where the command is the key and the instance is the value
+        """
+        return self._chatCommands
+
     def get_clients(self):
         """!
         @brief Returns an array of currently connected client ids. This excludes server query clients.
@@ -984,6 +1000,15 @@ class TeamspeakBot:
         @return The client id or none
         """
         return self._dataManager.get_client_clid_by_cldbid(cldbid)
+
+    def get_client_accesslevel(self, clid):
+        """!
+        @brief Returns the client accesslevel for the given client id.
+
+        @param clid Clientid to return the accesslevel for
+        @return Accesslevel of default accesslevel
+        """
+        return self._dataManager.get_access_level_by_clid(clid)
 
     def get_mysql_instance(self):
         """!
