@@ -87,7 +87,7 @@ class TeamspeakBot:
 
         if config.get_value("channel_text"):
             self._timer.start_timer(self._update_slaves, 250, False)
-
+        self.bot_name = config.get_value("bot_name") or "Bot"
         self._callbacksValueChanged = {}
         self._chatCommands = {}
 
@@ -516,6 +516,14 @@ class TeamspeakBot:
         self._queryTracker.reset()
         self._remove_all_slaves()
 
+    def _set_bot_name(self):
+        """!
+        @brief This will set the bots name to the one specified in the config file.
+
+        @return None
+        """
+        self.send_command("clientupdate client_nickname=" + escape(self.bot_name))
+
     def _update_all_clients(self):
         """!
         @brief Iterates through all online clients and calls _update_client on them
@@ -695,6 +703,7 @@ class TeamspeakBot:
         @return None
         """
 
+        self._set_bot_name()
         self._dataManager.add_channels(event.args)
         self._update_all_client_servergroups()
         self._call_method_on_all_plugins("on_initial_data", event.data, event.args)

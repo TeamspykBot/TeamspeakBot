@@ -1,12 +1,17 @@
 {
   "config_namespace": "development",
   "development": {
+    "bot_name": "Bot",
+    "command_prefix": ".",
+    "channel_text": true,
+    "load_all_plugins": true,
+    "plugin_list": [],
     "mysql": {
-      "host": "127.0.0.1",
+      "host": "root",
       "port": 3306,
-      "user": "root",
+      "user": "ts3bot",
       "password": "root",
-      "db": "MyBotDB"
+      "db": "ts3bot"
     },
     "serverquery": {
       "host": "127.0.0.1",
@@ -22,36 +27,7 @@
         "Normal": 1
       }
     },
-    "commandprefix": ".",
-    "channel_text": true,
-    "load_all_plugins": false,
-    "plugin_list": ["Test"]
-  },
-  "production": {
-    "mysql": {
-      "host": "127.0.0.1",
-      "port": 3306,
-      "user": "root",
-      "password": "root",
-      "db": "MyBotDB"
-    },
-    "serverquery": {
-      "host": "127.0.0.1",
-      "port": 10011,
-      "user": "serveradmin",
-      "password": "pass",
-      "virtualserverid": 1
-    },
-    "accesslevel": {
-      "default": 0,
-      "groups": {
-        "Server Admin": 10,
-        "Normal": 1
-      }
-    },
-    "commandprefix": ".",
-    "channel_text": true,
-    "load_all_plugins": false,
-    "plugin_list": []
+    "plugins": {
+    }
   }
 }
