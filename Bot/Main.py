@@ -312,6 +312,7 @@ class TeamspeakBot:
             if self._dataManager.get_client_value(event.args[0]["clid"], "client_type", None, True) is not None and \
                             int(self._dataManager.get_client_value(event.args[0]["clid"], "client_type", None,
                                                                    True)) != 0:
+                self._on_client_left(event)
                 return
             self._call_method_on_all_plugins("on_client_left", event)
             self._on_client_left(event)
@@ -361,6 +362,8 @@ class TeamspeakBot:
 
         self.send_command("clientinfo clid=%s" % str(clid), self._on_client_joined_updated_clientinfo,
                           {"join_data": event.args[0], "event": event})
+        self._update_client_remote_ip(clid)
+
         return event
 
     def _on_client_joined_updated_clientinfo(self, event):
@@ -574,7 +577,7 @@ class TeamspeakBot:
             callback(clid, key, old_value, value)
 
     def _update_all_client_db_accesslevel(self):
-        """
+        """!
         @brief Updates all accesslevels in the db
 
         @return None
@@ -584,13 +587,26 @@ class TeamspeakBot:
             self._update_client_db_accesslevel(clid)
 
     def _update_client_db_accesslevel(self, clid):
-        """
+        """!
         @brief Updates the accesslevel for the given client in the database
 
-        @param clid client for which to update the accesslevel
+        @param clid Client for which to update the accesslevel
         @return None
         """
         self._dataManager.update_client_accesslevel(clid)
+
+    def _update_client_remote_ip(self, clid):
+        """!
+        @brief Updates the remote_ip of the given client in the database
+
+        @param clid Client for which to update the accesslevel
+        @return None
+        """
+        self.send_command("clientinfo clid=%s" % str(clid),
+                          lambda event: self._dataManager.update_client_ip(
+                              event.data["clid"], event.args[0]["connection_client_ip"]
+                          ),
+                          {"clid": int(clid)})
 
     def _update_all_client_servergroups(self):
         """!
@@ -692,6 +708,10 @@ class TeamspeakBot:
         client_list = event.args
         client_list_without_server_queries = [client for client in client_list if client["client_type"] == '0']
         self._dataManager.add_clients(client_list, clear=True)
+
+        for client_id in self.get_clients():
+            self._update_client_remote_ip(client_id)
+
         self.send_command("channellist", self._on_initial_channellist, data=client_list_without_server_queries)
 
     def _on_initial_channellist(self, event):

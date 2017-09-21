@@ -20,10 +20,10 @@ class DataManager:
                 return int(clid)
         return None
 
-    def add_client(self, clid, client_data):
+    def add_client(self, clid, client_data, remote_ip="0.0.0.0"):
         if self._mysqlManager:
             self._mysqlManager.add_online_client(client_data["clid"], client_data["client_database_id"],
-                                                 client_data["client_nickname"], "0.0.0.0", self._defaultAccessLevel)
+                                                 client_data["client_nickname"], remote_ip, self._defaultAccessLevel)
 
         self._clientList[int(clid)] = {
             "teamspeak_data": client_data,
@@ -46,6 +46,11 @@ class DataManager:
 
         for clientProperty in client_data:
             self.set_client_value(clid, clientProperty, client_data[clientProperty], True, data_changed_callback)
+
+    def update_client_ip(self, clid, remote_ip):
+        if self._mysqlManager is None:
+            return
+        self._mysqlManager.set_client_ip(clid, remote_ip)
 
     def update_client_accesslevel(self, clid):
         if self._mysqlManager is None:

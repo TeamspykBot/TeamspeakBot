@@ -53,6 +53,9 @@ class MysqlManager:
     def set_client_accesslevel(self, clid, accesslevel):
         self.execute_query("UPDATE OnlineClients set accesslevel=%s WHERE clid=%s;", accesslevel, clid)
 
+    def set_client_ip(self, clid, remote_ip):
+        self.execute_query("UPDATE OnlineClients set remote_ip=%s WHERE clid=%s;", remote_ip, clid)
+
     def remove_online_client(self, clid):
         try:
             self.execute_query("DELETE FROM OnlineClients WHERE `clid` = %s", str(clid))
