@@ -83,6 +83,7 @@ class TeamspeakBot:
 
         self._timer.start_timer(self._update_all_clients, 250, False)
         self._timer.start_timer(self._update_all_client_servergroups, 250, False)
+        self._timer.start_timer(self._update_all_client_db_accesslevel, 60000, False)
 
         if config.get_value("channel_text"):
             self._timer.start_timer(self._update_slaves, 250, False)
@@ -388,6 +389,7 @@ class TeamspeakBot:
         """
         self._dataManager.add_client(event.data["complete_client_data"]["clid"], event.data["complete_client_data"])
         self._dataManager.add_client_servergroups(event.data["complete_client_data"]["clid"], event.args, True)
+        self._update_client_db_accesslevel(event.data["complete_client_data"]["clid"])
         self._call_method_on_all_plugins("on_client_joined", event.data["event"])
 
     def _on_client_left(self, event):
@@ -563,6 +565,25 @@ class TeamspeakBot:
         for callback in self._callbacksValueChanged[key]:
             callback(clid, key, old_value, value)
 
+    def _update_all_client_db_accesslevel(self):
+        """
+        @brief Updates all accesslevels in the db
+
+        @return None
+        """
+        online_clients = self._dataManager.get_clients()
+        for clid in online_clients:
+            self._update_client_db_accesslevel(clid)
+
+    def _update_client_db_accesslevel(self, clid):
+        """
+        @brief Updates the accesslevel for the given client in the database
+
+        @param clid client for which to update the accesslevel
+        @return None
+        """
+        self._dataManager.update_client_accesslevel(clid)
+
     def _update_all_client_servergroups(self):
         """!
         @brief Updates the servergroups of all clients. Needed to keep track of the access level.
@@ -602,7 +623,7 @@ class TeamspeakBot:
         """
         @brief Sends an heartbeat to the server to avoid getting the connection dropped due to inactivity
 
-        :@eturn None
+        @return None
         """
         self.send_command("whoami")
 
@@ -675,7 +696,11 @@ class TeamspeakBot:
         """
 
         self._dataManager.add_channels(event.args)
+        self._update_all_client_servergroups()
         self._call_method_on_all_plugins("on_initial_data", event.data, event.args)
+
+    def _on_initial_server_servergroups(self):
+        pass
 
     # everything for slaves ( receiving channel messages ) here
     def _update_slaves(self):
@@ -731,7 +756,6 @@ class TeamspeakBot:
             self._remove_slave(cid)
 
     # functions mainly intended for plugins
-
     def set_value(self, key, value):
         """!
         @brief Sets a persistent value which is saved in the database and can be retrieved later.
@@ -752,7 +776,7 @@ class TeamspeakBot:
         """
         return self._dataManager.get_value(key, default_value)
 
-    def add_chat_command(self, command, description, access_level, callback, args=[], is_channel_command=False):
+    def add_chat_command(self, command, description, access_level, callback, args=None, is_channel_command=False):
         """!
         @brief Adds a chat command.
 
@@ -775,6 +799,8 @@ class TeamspeakBot:
         @return None
         """
 
+        if args is None:
+            args = []
         if command in self._chatCommands:
             return False
 

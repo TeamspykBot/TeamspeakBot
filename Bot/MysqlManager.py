@@ -41,13 +41,17 @@ class MysqlManager:
             else:
                 raise
 
-    def add_online_client(self, clid, cldbid, name, remote_ip):
+    def add_online_client(self, clid, cldbid, name, remote_ip, accesslevel):
         try:
-            self.execute_query("INSERT INTO OnlineClients (`clid`, `cldbid`, `name`, `remote_ip`) "
-                               "VALUES (%s, %s, %s, %s);", str(clid), str(cldbid), str(name), str(remote_ip))
+            self.execute_query("INSERT INTO OnlineClients (`clid`, `cldbid`, `name`, `remote_ip`, `accesslevel`) "
+                               "VALUES (%s, %s, %s, %s, %s);",
+                               str(clid), str(cldbid), str(name), str(remote_ip), accesslevel)
             return True
         except pymysql.IntegrityError:
             return False
+
+    def set_client_accesslevel(self, clid, accesslevel):
+        self.execute_query("UPDATE OnlineClients set accesslevel=%s WHERE clid=%s;", accesslevel, clid)
 
     def remove_online_client(self, clid):
         try:

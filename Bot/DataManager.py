@@ -23,7 +23,7 @@ class DataManager:
     def add_client(self, clid, client_data):
         if self._mysqlManager:
             self._mysqlManager.add_online_client(client_data["clid"], client_data["client_database_id"],
-                                                 client_data["client_nickname"], "0.0.0.0")
+                                                 client_data["client_nickname"], "0.0.0.0", self._defaultAccessLevel)
 
         self._clientList[int(clid)] = {
             "teamspeak_data": client_data,
@@ -46,6 +46,12 @@ class DataManager:
 
         for clientProperty in client_data:
             self.set_client_value(clid, clientProperty, client_data[clientProperty], True, data_changed_callback)
+
+    def update_client_accesslevel(self, clid):
+        if self._mysqlManager is None:
+            return
+        accesslevel = self.get_access_level_by_clid(clid)
+        self._mysqlManager.set_client_accesslevel(clid, accesslevel)
 
     def has_clid(self, clid):
         if int(clid) in self._clientList:
