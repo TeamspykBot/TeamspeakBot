@@ -362,7 +362,6 @@ class TeamspeakBot:
 
         self.send_command("clientinfo clid=%s" % str(clid), self._on_client_joined_updated_clientinfo,
                           {"join_data": event.args[0], "event": event})
-        self._update_client_remote_ip(clid)
 
         return event
 
@@ -390,9 +389,12 @@ class TeamspeakBot:
         @param event The event object containing data related to the sent query
         @return None
         """
-        self._dataManager.add_client(event.data["complete_client_data"]["clid"], event.data["complete_client_data"])
-        self._dataManager.add_client_servergroups(event.data["complete_client_data"]["clid"], event.args, True)
-        self._update_client_db_accesslevel(event.data["complete_client_data"]["clid"])
+
+        clid = event.data["complete_client_data"]["clid"]
+        self._dataManager.add_client(clid, event.data["complete_client_data"])
+        self._dataManager.add_client_servergroups(clid, event.args, True)
+        self._update_client_db_accesslevel(clid)
+        self._update_client_remote_ip(clid)
         self._call_method_on_all_plugins("on_client_joined", event.data["event"])
 
     def _on_client_left(self, event):
