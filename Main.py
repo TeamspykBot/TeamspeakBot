@@ -25,5 +25,6 @@ def main():
         time.sleep(10 / 1000)
         bot.process()
 
+
 if __name__ == "__main__":
     main()
