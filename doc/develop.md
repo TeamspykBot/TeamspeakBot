@@ -71,3 +71,13 @@ Will be called when the bot loses connection to the teamspeak server. The bot wi
 <br>
 
 ## Managing (persistent) data
+
+You are provided two kind of API's by the bot to manage persistent values.
+You can either save global persistent data or client persistent data.
+Client persistent data is bound to the client database id. That means that
+when a client is connected in multiple instances but with the same identity,
+they will share the persistent data.
+
+You can save and retrieve global persistent data with the functions
+`set_value` and `get_value`. Client persistent data can be set by using
+`set_client_value` and `get_client_value`.
