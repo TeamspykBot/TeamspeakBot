@@ -855,6 +855,43 @@ class TeamspeakBot:
         """
         return self._dataManager.get_value(key, default_value)
 
+    @staticmethod
+    def get_user_setting(key_path):
+        """!
+        @brief Returns the value of an user setting.
+
+        This function returns the value of an user setting.
+        These are values the user can define inside their config.json.
+        The key can be a path to a value ( separated with . )
+        which will correspond to a key nested inside the json document.
+
+        E.g:
+
+            key_path = MyPlugin.youtube.api_key
+
+        would correspond to the following structure inside config.json:
+
+        ```
+                {
+                    "chosen_config_namespace": {
+                        "plugins": {
+                            "MyPlugin": {
+                                "youtube": {
+                                    "api_key": "000000000000000"
+                                }
+                            }
+                        }
+                    }
+                }
+        ```
+
+        The config namespace and the plugins key be prepended automatically.
+
+        @param key_path The path to the value
+        @return The value at the given path
+        """
+        return config.get_value("plugins." + key_path)
+
     def get_clients(self):
         """!
         @brief Returns an array of currently connected client ids. This excludes server query clients.
@@ -922,43 +959,6 @@ class TeamspeakBot:
         if key not in self._callbacksValueChanged:
             self._callbacksValueChanged[key] = []
         self._callbacksValueChanged[key].append(callback)
-
-    @staticmethod
-    def get_user_setting(key_path):
-        """!
-        @brief Returns the value of an user setting.
-
-        This function returns the value of an user setting.
-        These are values the user can define inside their config.json.
-        The key can be a path to a value ( separated with . )
-        which will correspond to a key nested inside the json document.
-
-        E.g:
-
-            key_path = MyPlugin.youtube.api_key
-
-        would correspond to the following structure inside config.json:
-
-        ```
-                {
-                    "chosen_config_namespace": {
-                        "plugins": {
-                            "MyPlugin": {
-                                "youtube": {
-                                    "api_key": "000000000000000"
-                                }
-                            }
-                        }
-                    }
-                }
-        ```
-
-        The config namespace and the plugins key be prepended automatically.
-
-        @param key_path The path to the value
-        @return The value at the given path
-        """
-        return config.get_value("plugins." + key_path)
 
     def start_timer(self, callback, interval, is_single_shot=False, *args):
         """!
@@ -1124,6 +1124,19 @@ class TeamspeakBot:
         self.send_command("sendtextmessage targetmode=1 target={0} msg={1}".format(
             clid, escape(message)
         ), callback, data, err_callback)
+
+    def send_text_to_channel(self, cid, message):
+        """!
+        @brief Sends a text message in a channel
+
+        @param cid Channel id
+        @param msg Message to send
+        @return None
+        """
+        self.switch_to_channel(cid)
+        self.send_command("sendtextmessage targetmode=2 target={0} msg={1}".format(
+            cid, escape(message)
+        ))
 
     # more complex server query wrappers encapsulating multiple commands into one function
     def login_use(self, register_for_events=True):
