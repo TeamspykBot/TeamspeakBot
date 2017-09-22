@@ -787,26 +787,6 @@ class TeamspeakBot:
             self._remove_slave(cid)
 
     # functions mainly intended for plugins
-    def set_value(self, key, value):
-        """!
-        @brief Sets a persistent value which is saved in the database and can be retrieved later.
-
-        @param key Identifier for you value
-        @param value Value to set
-        @return None
-        """
-        return self._dataManager.set_value(key, value)
-
-    def get_value(self, key, default_value=None):
-        """!
-        @brief Retrieves a persistent value identified by key which was set earlier.
-
-        @param key
-        @param default_value The default value to return when the key was not found
-        @return Value
-        """
-        return self._dataManager.get_value(key, default_value)
-
     def add_chat_command(self, command, description, access_level, callback, args=None, is_channel_command=False):
         """!
         @brief Adds a chat command.
@@ -854,6 +834,26 @@ class TeamspeakBot:
         @return An dictionary of commands, where the command is the key and the instance is the value
         """
         return self._chatCommands
+
+    def set_value(self, key, value):
+        """!
+        @brief Sets a persistent value which is saved in the database and can be retrieved later.
+
+        @param key Identifier for you value
+        @param value Value to set
+        @return None
+        """
+        return self._dataManager.set_value(key, value)
+
+    def get_value(self, key, default_value=None):
+        """!
+        @brief Retrieves a persistent value identified by key which was set earlier.
+
+        @param key
+        @param default_value The default value to return when the key was not found
+        @return Value
+        """
+        return self._dataManager.get_value(key, default_value)
 
     def get_clients(self):
         """!
