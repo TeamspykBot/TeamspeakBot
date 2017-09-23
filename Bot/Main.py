@@ -1078,6 +1078,16 @@ class TeamspeakBot:
         """
         self.send_command("clientmove clid=%s cid=%s" % (self._my_clid, cid))
 
+    def switch_client_to_channel(self, clid, cid):
+        """!
+        @brief Switches a client to the given channel id
+
+        @param clid The client id to switch
+        @param cid The channel id the client should be switched to
+        @return None
+        """
+        self.send_command("clientmove clid=%s cid=%s" % (clid, cid))
+
     def servergroupaddclient(self, sgid, cldbid, callback=None, data=None, err_callback=None):
         """!
         @brief Adds the given client ot the given servergroup
