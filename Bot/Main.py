@@ -974,7 +974,7 @@ class TeamspeakBot:
         @param args Additional args to pass onto the callback
         @return Integer A identifier for the timer used to delete it
         """
-        self._timer.start_timer(callback, interval, is_single_shot, *args)
+        return self._timer.start_timer(callback, interval, is_single_shot, *args)
 
     def stop_timer(self, timer_id):
         """!
