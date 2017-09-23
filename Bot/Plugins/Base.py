@@ -1,9 +1,9 @@
-from Bot.Main import CommandResults
+from Bot.Main import CommandResults, TeamspeakBot
 
 
 class PluginBase:
     def __init__(self, bot_instance):
-        self.bot_instance = bot_instance
+        self.bot_instance = bot_instance        # type: TeamspeakBot
         self.CommandResults = CommandResults
         self.order = 0
 
