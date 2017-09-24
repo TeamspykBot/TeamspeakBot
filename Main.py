@@ -22,6 +22,7 @@ def main():
     bot.login_use()
 
     while True:
+        time.sleep(10 / 1000)
         bot.process()
 
 

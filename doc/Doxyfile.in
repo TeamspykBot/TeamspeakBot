@@ -7,7 +7,6 @@ EXCLUDE_SYMBOLS         = BotChannelSlave EventTypes connect disconnect process
 
 RECURSIVE               = YES
 
-GENERATE_LATEX          = NO
 EXTRACT_ALL             = NO
 CLASS_DIAGRAMS          = NO
 HIDE_UNDOC_RELATIONS    = NO
@@ -22,4 +21,4 @@ MAX_DOT_GRAPH_DEPTH     = 0
 DOT_TRANSPARENT         = YES
 
 SORT_MEMBER_DOCS = YES
-
+GENERATE_TREEVIEW = NO
