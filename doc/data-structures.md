@@ -1,6 +1,6 @@
- 
 ## Data Structure
-The bot will unescape and normalize all messages it receives from the teamspeak server. the event object has three members:
+The bot will unescape and normalize all messages it receives from the
+teamspeak server. The event object has three members:
 
 - args: holds the answer from the teamspeak server
 - data: holds user defined data which was given in the send_command call

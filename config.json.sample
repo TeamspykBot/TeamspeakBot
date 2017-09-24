@@ -1,33 +1,33 @@
 {
-  "config_namespace": "development",
-  "development": {
-    "bot_name": "Bot",
-    "command_prefix": ".",
-    "channel_text": true,
-    "load_all_plugins": true,
-    "plugin_list": [],
-    "mysql": {
-      "host": "root",
-      "port": 3306,
-      "user": "ts3bot",
-      "password": "root",
-      "db": "ts3bot"
-    },
-    "serverquery": {
-      "host": "127.0.0.1",
-      "port": 10011,
-      "user": "serveradmin",
-      "password": "pass",
-      "virtualserverid": 1
-    },
-    "accesslevel": {
-      "default": 0,
-      "groups": {
-        "Server Admin": 10,
-        "Normal": 1
-      }
-    },
-    "plugins": {
+    "config_namespace": "development",
+    "development": {
+        "bot_name": "Bot",
+        "command_prefix": ".",
+        "channel_text": true,
+        "load_all_plugins": true,
+        "plugin_list": [],
+        "mysql": {
+            "host": "localhost",
+            "port": 3306,
+            "user": "ts3bot",
+            "password": "root",
+            "db": "ts3bot"
+        },
+        "serverquery": {
+            "host": "127.0.0.1",
+            "port": 10011,
+            "user": "serveradmin",
+            "password": "pass",
+            "virtualserverid": 1
+        },
+        "accesslevel": {
+            "default": 0,
+            "groups": {
+                "Server Admin": 10,
+                "Normal": 1
+            }
+        },
+        "plugins": {
+        }
     }
-  }
 }

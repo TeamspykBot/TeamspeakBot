@@ -1,8 +1,22 @@
 # Introduction
 
-Every plugin should be its own file in Bot/Plugins. The bot will load all classes which end with "Plugin". The file should import `PluginBase` from `Bot.Plugins.Base` and the class should inherit the imported `PluginBase`. Further, the class needs to provide a `__init__` method which takes one argument, the `bot_instance` and calls the parents `__init__` method with that argument. Also, all your classes which are supposed to get loaded by the teamspeakbot need to end in `Plugin`. E.g `HelpPlugin` or `AutoKickPlugin`.
+Every plugin should be its own file in Bot/Plugins.
+The bot will load all classes which end with "Plugin".
+The file should import `PluginBase` from `Bot.Plugins.Base` and the
+class should inherit the imported `PluginBase`. Further, the class needs
+to provide a `__init__` method which takes one argument, the `bot_instance`
+and calls the parents `__init__` method with that argument.
+Also, all your classes which are supposed to get loaded by the teamspeakbot
+need to end in `Plugin`. E.g `HelpPlugin` or `AutoKickPlugin`.
 
-You can influence the order in which your plugin will receive callbacks by overwriting self.order in inside your plugins init method. Plugins will be sorted according to the order, meaning that with a lower order your plugin will get called before plugins with a higher order. This is useful if you need to manipulate the event object. The default order set in the PluginBase is 0.
+You can access the provided bot functions through self.bot_instance in plugins.
+Take a look [here](#) for the documentation.
+
+You can influence the order in which your plugin will receive callbacks
+by overwriting self.order in inside your plugins init method. Plugins will
+be sorted according to the order, meaning that with a lower order your
+plugin will get called before plugins with a higher order. This is useful
+if you need to manipulate the event object. The default order set in the PluginBase is 0.
 
 Most minimal plugin setup:
 
@@ -19,7 +33,7 @@ Arguments:
 - client_list
 - channel_list
 
-Will be called everytime the bot logs into the teamspeak server. It will supply the initial list of clients and channel which are present at the given moment. See [data structures](data-structures.md) for an overview about the structure of the arguments.
+Will be called every time the bot logs into the teamspeak server. It will supply the initial list of clients and channel which are present at the given moment. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 <br>
 
@@ -27,7 +41,7 @@ Will be called everytime the bot logs into the teamspeak server. It will supply 
 Arguments:
 - event
 
-Will be called everytime a client connects. See [data structures](data-structures.md) for an overview about the structure of the arguments.
+Will be called every time a client connects. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 <br>
 
@@ -35,7 +49,7 @@ Will be called everytime a client connects. See [data structures](data-structure
 Arguments:
 - event
 
-Will be called everytime a client disconnects. See [data structures](data-structures.md) for an overview about the structure of the arguments.
+Will be called every time a client disconnects. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 <br>
 
@@ -43,7 +57,7 @@ Will be called everytime a client disconnects. See [data structures](data-struct
 Arguments:
 - event
 
-Will be called everytime a client moves between channels. See [data structures](data-structures.md) for an overview about the structure of the arguments.
+Will be called every time a client moves between channels. See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 <br>
 
@@ -80,4 +94,5 @@ they will share the persistent data.
 
 You can save and retrieve global persistent data with the functions
 `set_value` and `get_value`. Client persistent data can be set by using
-`set_client_value` and `get_client_value`.
+`set_client_value` and `get_client_value`. Take a look [here](#) for
+detailed documentation about available functions inside self.bot_instance
