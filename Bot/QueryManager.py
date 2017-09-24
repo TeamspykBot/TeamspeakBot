@@ -16,6 +16,7 @@ class Query:
     def __repr__(self):
         return self.to_string()
 
+
 class QueryTracker:
     def __init__(self):
         self._queryList = []
