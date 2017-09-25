@@ -63,6 +63,7 @@ class TeamspeakBot:
 
         self._timer = Timer()
         self._timer.start_timer(self._send_heartbeat, 60000, False)
+        self._timer.start_timer(lambda: self._queryTracker.clean_up(), 60000, False)
 
         if minimal:
             self._dataManager = Bot.DataManager.DataManager(None)
