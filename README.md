@@ -18,9 +18,14 @@ To use this Bot you must meet the following criteria:
 ## Bot Setup
 - Clone or download this repository
 - Duplicate config.json.sample and name it config.json
-- Fill in your values. You can find a complete explanation about the config [here](#)
+- Fill in your values. You can find a complete explanation about the config [here](doc/config.md)
 - Import the sql dump into your database
 - Run Main.py in the root directory
+
+You can take a look at the [plugin repository](https://github.com/TeamspykBot/Plugins) or search the internet
+to find available plugins. Plugins need to be placed inside the Bot/Plugins folder.
+Every plugin is expected to include a documentation detailing its usage
+inside the plugin.
 
 ## How to develop plugins
 Take a look at Bot/Plugins/Example.py which is a plugin implementing

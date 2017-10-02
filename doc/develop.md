@@ -10,7 +10,7 @@ Also, all your classes which are supposed to get loaded by the teamspeakbot
 need to end in `Plugin`. E.g `HelpPlugin` or `AutoKickPlugin`.
 
 You can access the provided bot functions through self.bot_instance in plugins.
-Take a look [here](#) for the documentation.
+Take a look [here](https://teamspykbot.github.io/classGeneral_1_1TeamspeakBot_1_1Bot_1_1Main_1_1TeamspeakBot.html) for the documentation.
 
 You can influence the order in which your plugin will receive callbacks
 by overwriting self.order in inside your plugins init method. Plugins will
@@ -33,7 +33,9 @@ Arguments:
 - client_list
 - channel_list
 
-Will be called every time the bot logs into the teamspeak server. It will supply the initial list of clients and channel which are present at the given moment. See [data structures](data-structures.md) for an overview about the structure of the arguments.
+Will be called every time the bot logs into the teamspeak server.
+It will supply the initial list of clients and channel which are present at the given moment.
+See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 <br>
 
@@ -73,14 +75,19 @@ Will be called when the bot receives a private message. See [data structures](da
 Arguments:
 - event
 
-Will be called when the bot receives a channel message. Due to teamspeak server query limitations, this requires to have an active bot instance in every ( occupied )channel. As this drains many slots, this behaviour can be toggled in the settings. Please note that turning off that behaviour also means that this callback will never be called. See [data structures](data-structures.md) for an overview about the structure of the arguments.
+Will be called when the bot receives a channel message. Due to teamspeak server query limitations,
+this requires to have an active bot instance in every ( occupied )channel. As this drains many slots,
+this behaviour can be toggled in the settings. Please note that turning off that behaviour also means
+that this callback will never be called.
+See [data structures](data-structures.md) for an overview about the structure of the arguments.
 
 <br>
 
 ### on_connection_lost
 Arguments: None
 
-Will be called when the bot loses connection to the teamspeak server. The bot will try to reconnect and call on_initial_data as soon as a connection is established again.
+Will be called when the bot loses connection to the teamspeak server.
+The bot will try to reconnect and call on_initial_data as soon as a connection is established again.
 
 <br>
 
@@ -94,5 +101,6 @@ they will share the persistent data.
 
 You can save and retrieve global persistent data with the functions
 `set_value` and `get_value`. Client persistent data can be set by using
-`set_client_value` and `get_client_value`. Take a look [here](#) for
+`set_client_value` and `get_client_value`.
+Take a look [here](https://teamspykbot.github.io/classGeneral_1_1TeamspeakBot_1_1Bot_1_1Main_1_1TeamspeakBot.html) for
 detailed documentation about available functions inside self.bot_instance
