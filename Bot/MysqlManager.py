@@ -20,7 +20,7 @@ class MysqlManager:
         self._db = db
         try:
             self._connection = pymysql.connect(host=host, port=port, user=user, passwd=password, db=db,
-                                               autocommit=True, charset='utf8', cursorclass=pymysql.cursors.DictCursor)
+                                               autocommit=True, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
             self._cur = self._connection.cursor()
         except pymysql.MySQLError as e:
             if e.args[0] == 2003:  # Could not connect to database
