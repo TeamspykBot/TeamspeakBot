@@ -25,5 +25,8 @@ class PluginBase:
     def on_channel_text(self, event):
         pass
 
+    def on_client_say(self, event):
+        pass
+
     def on_connection_lost(self):
         pass

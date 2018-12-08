@@ -3,12 +3,15 @@ import inspect
 from enum import Enum
 import socket
 
+import queue
+import UnixServer
 import Network
 import Bot.MysqlManager
 import Bot.QueryManager
 import Bot.DataManager
 import importlib
 import os
+import signal
 
 from Bot.Utility import starts_with_c_i, normalize_message, Event, escape, Timer, ChatCommand
 
@@ -19,12 +22,13 @@ class EventTypes(Enum):
     CLIENT_JOINED = 0
     CLIENT_LEFT = 1
     CLIENT_MOVED = 2
-    TEXT = 3
-    LOST_CONNECTION = 4
+    CLIENT_SAY = 3
+    TEXT = 4
+    LOST_CONNECTION = 5
 
 
 class CommandResults(Enum):
-    ## Used to indicate that the user is missing arguments. The bot will resend the command structure to the user
+    # Used to indicate that the user is missing arguments. The bot will resend the command structure to the user
     INVALID_USE = 1
 
 
@@ -39,7 +43,7 @@ class TeamspeakBot:
         @param password Serverquery password
         @param virtual_server_id The virtual id of the serverr you want the bot to manage
         @param minimal Initializes a minimal bot version.
-            The following will not be initialized: mysql, timer, plugins
+            The following will not be initialized: mysql, timer, plugins, ts3speech
         """
 
         self._conn = None
@@ -65,6 +69,7 @@ class TeamspeakBot:
         self._timer.start_timer(self._send_heartbeat, 60000, False)
         self._timer.start_timer(lambda: self._queryTracker.clean_up(), 60000, False)
 
+        self.minimal = minimal
         if minimal:
             self._dataManager = Bot.DataManager.DataManager(None)
             self._dataManager.set_default_access_level(config.get_value("accesslevel.default"))
@@ -82,6 +87,13 @@ class TeamspeakBot:
         self._dataManager.set_default_access_level(config.get_value("accesslevel.default"))
         self._dataManager.set_access_levels(config.get_value("accesslevel.groups"))
 
+        ts3speech_socket = config.get_value("ts3speech_socket")
+        if ts3speech_socket != "":
+            self.ts3speech_queue = queue.Queue()
+            self.ts3speech_server = UnixServer.UnixServer(self.ts3speech_queue, ts3speech_socket)
+            self.ts3speech_server.start()
+            self.ts3speech_socket = True
+
         self._timer.start_timer(self._update_all_clients, 250, False)
         self._timer.start_timer(self._update_all_client_servergroups, 250, False)
         self._timer.start_timer(self._update_all_client_db_accesslevel, 60000, False)
@@ -93,6 +105,18 @@ class TeamspeakBot:
         self._chatCommands = {}
 
         self._setup_plugins()
+
+        signal.signal(signal.SIGTERM, self.shutdown_signal)
+        signal.signal(signal.SIGINT, self.shutdown_signal)
+
+    def shutdown_signal(self, signum, frame):
+        self.ts3speech_server.shutdown_flag.set()
+        self.disconnect()
+        self._conn.clear_message_buffer()
+        self._dataManager.clear_all_data()
+        self._queryTracker.reset()
+        self._remove_all_slaves()
+        exit(signum)
 
     def _setup_plugins(self):
         """!
@@ -200,6 +224,11 @@ class TeamspeakBot:
 
         @return None
         """
+
+        while not self.minimal and self.ts3speech_socket and not self.ts3speech_queue.empty():
+            item = self.ts3speech_queue.get_nowait()
+            event = Event([{"clid": item[0], "text": item[1].decode("utf-8")}])
+            self._call_callbacks(event, EventTypes.CLIENT_SAY)
 
         while self._conn.is_connected() and self._message_available():
             self._handle_message()
@@ -334,6 +363,13 @@ class TeamspeakBot:
             event = self._on_text(event)
             if event:
                 self._call_method_on_all_plugins("on_private_text", event)
+
+        if event_type == EventTypes.CLIENT_SAY:
+            if self._dataManager.get_client_value(event.args[0]["clid"], "client_type", None, True) is not None \
+                    and int(
+                        self._dataManager.get_client_value(event.args[0]["clid"], "client_type", None, True)) != 0:
+                return
+            self._call_method_on_all_plugins("on_client_say", event)
 
         if event_type == EventTypes.LOST_CONNECTION:
             if self._conn.is_connected():
