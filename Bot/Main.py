@@ -88,6 +88,7 @@ class TeamspeakBot:
         self._dataManager.set_access_levels(config.get_value("accesslevel.groups"))
 
         ts3speech_socket = config.get_value("ts3speech_socket")
+        self.ts3speech_socket = False
         if ts3speech_socket != "":
             self.ts3speech_queue = queue.Queue()
             self.ts3speech_server = UnixServer.UnixServer(self.ts3speech_queue, ts3speech_socket)
