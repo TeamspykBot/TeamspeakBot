@@ -41,14 +41,12 @@ class UnixServer(Thread):
         self.server.listen(1)
 
         while not self.shutdown_flag.is_set():
-            print("shutdown flag is: " + str(self.shutdown_flag.is_set()))
             readable, writable, errored = select.select([self.server], [], [], 0)
             if len(readable) > 0:
                 self.client, _ = self.server.accept()
                 break
 
         while not self.shutdown_flag.is_set():
-            print("shutdown flag is: " + str(self.shutdown_flag.is_set()))
             datagram = self.recv_exact(4)
             if datagram is None:
                 break
