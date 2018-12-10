@@ -4,6 +4,7 @@
         "bot_name": "Bot",
         "command_prefix": ".",
         "channel_text": true,
+        "ts3speech_socket": "",
         "load_all_plugins": true,
         "plugin_list": [],
         "mysql": {
